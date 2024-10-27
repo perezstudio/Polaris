@@ -9,49 +9,27 @@ import SwiftUI
 import SwiftData
 
 struct ContentView: View {
+	
     @Environment(\.modelContext) private var modelContext
-    @Query private var items: [Item]
+	@Query private var projects: [Project]
+	@State var selectedProject: Project? = nil
 
     var body: some View {
         NavigationSplitView {
-			MainMenuView()
-#if os(macOS)
-            .navigationSplitViewColumnWidth(min: 180, ideal: 200)
-#endif
-            .toolbar {
-#if os(iOS)
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    EditButton()
-                }
-#endif
-                ToolbarItem {
-                    Button(action: addItem) {
-                        Label("Add Item", systemImage: "plus")
-                    }
-                }
-            }
+			MainMenuView(selectedProject: $selectedProject)
         } detail: {
-            Text("Select an item")
-        }
-    }
-
-    private func addItem() {
-        withAnimation {
-            let newItem = Item(timestamp: Date())
-            modelContext.insert(newItem)
-        }
-    }
-
-    private func deleteItems(offsets: IndexSet) {
-        withAnimation {
-            for index in offsets {
-                modelContext.delete(items[index])
-            }
+			List {
+				ContentUnavailableView {
+					Label("Select A Project or Filter", systemImage: "rectangle.stack")
+				} description: {
+					Text("Select a Project or Filter View from the sidebar.")
+				}
+			}
         }
     }
 }
 
 #Preview {
     ContentView()
-        .modelContainer(for: Item.self, inMemory: true)
+        .modelContainer(for: Project.self, inMemory: true)
 }

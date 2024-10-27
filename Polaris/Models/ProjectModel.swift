@@ -18,8 +18,9 @@ class Project {
 	var status: Status
 	var icon: String
 	var color: ProjectColors
+	@Relationship(deleteRule: .cascade) var todos: [Todo] = []
 	
-	init(id: UUID = UUID(), name: String, notes: String, dueDate: Date? = nil, deadLine: Date? = nil, status: Status, icon: String, color: ProjectColors) {
+	init(id: UUID = UUID(), name: String, notes: String, dueDate: Date? = nil, deadLine: Date? = nil, status: Status, icon: String, color: ProjectColors, todos: [Todo] = []) {
 		self.id = id
 		self.name = name
 		self.notes = notes
@@ -28,5 +29,6 @@ class Project {
 		self.status = status
 		self.icon = icon
 		self.color = color
+		self.todos = todos
 	}
 }

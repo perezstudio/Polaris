@@ -23,13 +23,23 @@ struct MainMenuView: View {
 		NavigationStack {
 			List {
 				Section {
-					FilterRowView(projectName: "Inbox", projectColor: .blue, projectIcon: "tray.fill")
+					NavigationLink(destination: FilteredTodoView(filter: .inbox)) {
+						FilterRowView(projectName: "Inbox", projectColor: .blue, projectIcon: "tray.fill")
+					}
 				}
 				Section {
-					FilterRowView(projectName: "Today", projectColor: .yellow, projectIcon: "star.fill")
-					FilterRowView(projectName: "Upcoming", projectColor: .red, projectIcon: "calendar")
-					FilterRowView(projectName: "All My Tasks", projectColor: .teal, projectIcon: "checklist")
-					FilterRowView(projectName: "Logbook", projectColor: .green, projectIcon: "checkmark.circle.fill")
+					NavigationLink(destination: FilteredTodoView(filter: .today)) {
+						FilterRowView(projectName: "Today", projectColor: .yellow, projectIcon: "star.fill")
+					}
+					NavigationLink(destination: FilteredTodoView(filter: .upcoming)) {
+						FilterRowView(projectName: "Upcoming", projectColor: .red, projectIcon: "calendar")
+					}
+					NavigationLink(destination: FilteredTodoView(filter: .all)) {
+						FilterRowView(projectName: "All My Tasks", projectColor: .teal, projectIcon: "checklist")
+					}
+					NavigationLink(destination: FilteredTodoView(filter: .completed)) {
+						FilterRowView(projectName: "Logbook", projectColor: .green, projectIcon: "checkmark.circle.fill")
+					}
 				}
 				Section(header: Text("Projects")) {
 					ForEach(projects) { project in

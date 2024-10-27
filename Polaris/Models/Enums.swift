@@ -77,3 +77,11 @@ public enum ProjectColors: String, Codable, CaseIterable, Identifiable {
 		}
 	}
 }
+
+enum TodoFilter {
+	case all
+	case inbox
+	case today
+	case upcoming
+	case completed
+}

@@ -21,10 +21,11 @@ struct TaskDetailsView: View {
 					HStack(spacing: 16) {
 						TodoCheckboxView(isChecked: $todo.status)
 						TextField("Title", text: $todo.title)
+							.frame(maxWidth: .infinity, alignment: .leading)
 					}
 				}
 				if(todo.project != nil) {
-					Section {
+					Section(header: Text("Project")) {
 						Button {
 							openProjectPickerSheet.toggle()
 						} label: {
@@ -33,7 +34,7 @@ struct TaskDetailsView: View {
 						.foregroundStyle(.primary)
 					}
 				}
-				Section {
+				Section(header: Text("Dates")) {
 					Button {
 						dueDatePicker.toggle()
 					} label: {
@@ -51,7 +52,7 @@ struct TaskDetailsView: View {
 					TextEditor(text: $todo.notes)
 				}
 			}
-			.navigationTitle("Details")
+			.navigationTitle(todo.title)
 			.navigationBarTitleDisplayMode(.large)
 			.sheet(isPresented: $openProjectPickerSheet) {
 				ProjectPickerView()

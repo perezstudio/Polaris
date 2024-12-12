@@ -53,7 +53,9 @@ struct TaskDetailsView: View {
 				}
 			}
 			.navigationTitle(todo.title)
+			#if os(iOS)
 			.navigationBarTitleDisplayMode(.large)
+			#endif
 			.sheet(isPresented: $openProjectPickerSheet) {
 				ProjectPickerView()
 			}
@@ -63,8 +65,8 @@ struct TaskDetailsView: View {
 
 #Preview {
 	
-	var newProject = Project(id: UUID(), name: "New Project", notes: "Description", status: .inProgress, icon: "square.stack", color: ProjectColors.red)
-	var newTodo = Todo(title: "New Task", status: false, notes: "Description", project: newProject, inbox: false)
+	let newProject = Project(id: UUID(), name: "New Project", notes: "Description", status: .inProgress, icon: "square.stack", color: ProjectColors.red)
+	let newTodo = Todo(title: "New Task", status: false, notes: "Description", project: newProject, inbox: false)
 	
 	TaskDetailsView(todo: newTodo)
 		.modelContainer(for: [Todo.self, Project.self], inMemory: true)

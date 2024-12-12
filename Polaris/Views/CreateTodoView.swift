@@ -67,6 +67,7 @@ struct CreateTodoView: View {
 			}
 			.navigationTitle("Create Todo")
 			.toolbar {
+				#if os(iOS)
 				ToolbarItem(placement: .navigationBarTrailing) {
 					Button {
 						dismiss()
@@ -74,27 +75,38 @@ struct CreateTodoView: View {
 						Label("Close", systemImage: "xmark.circle.fill")
 					}
 				}
+				#endif
 			}
 		}
 	}
 	
 	private func createTodo() {
-		let newTodo = Todo(
-			title: title,
-			status: false,
-			notes: notes,
-			dueDate: enableDueDate ? dueDate : nil,
-			deadLine: enableDeadline ? dateLine : nil,
-			project: selectedProject,
-			inbox: inbox
-		)
-		
-		modelContext.insert(newTodo)
-		
-		if let selectedProject = selectedProject {
-			selectedProject.todos.append(newTodo)
+		if(inbox) {
+			let newTodo = Todo(
+				title: title,
+				status: false,
+				notes: notes,
+				dueDate: enableDueDate ? dueDate : nil,
+				deadLine: enableDeadline ? dateLine : nil,
+				project: nil,
+				inbox: inbox
+			)
+			modelContext.insert(newTodo)
+		} else {
+			let newTodo = Todo(
+				title: title,
+				status: false,
+				notes: notes,
+				dueDate: enableDueDate ? dueDate : nil,
+				deadLine: enableDeadline ? dateLine : nil,
+				project: selectedProject,
+				inbox: inbox
+			)
+			modelContext.insert(newTodo)
+			if let selectedProject = selectedProject {
+				selectedProject.todos.append(newTodo)
+			}
 		}
-		
 		try? modelContext.save()
 		project = selectedProject
 		dismiss()

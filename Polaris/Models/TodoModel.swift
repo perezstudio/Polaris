@@ -18,8 +18,9 @@ class Todo {
 	var deadLine: Date?
 	@Relationship(inverse: \Project.todos) var project: Project?
 	var inbox: Bool
+	var createdDate: Date
 	
-	init(id: UUID = UUID(), title: String, status: Bool, notes: String, dueDate: Date? = nil, deadLine: Date? = nil, project: Project?, inbox: Bool) {
+	init(id: UUID = UUID(), title: String, status: Bool, notes: String, dueDate: Date? = nil, deadLine: Date? = nil, project: Project?, inbox: Bool, createdDate: Date = Date.now) {
 		self.id = id
 		self.title = title
 		self.status = status
@@ -28,5 +29,6 @@ class Todo {
 		self.deadLine = deadLine
 		self.project = project
 		self.inbox = inbox
+		self.createdDate = createdDate
 	}
 }

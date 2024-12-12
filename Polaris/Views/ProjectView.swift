@@ -13,6 +13,7 @@ struct ProjectView: View {
 	@State var openCreateTaskSheet: Bool = false
 	@State var openTaskDetailsInspector: Bool = false
 	@State var selectedTask: Todo? = nil
+	@State var openEditProjectSheet: Bool = false
 	
     var body: some View {
 		VStack {
@@ -44,6 +45,8 @@ struct ProjectView: View {
 					}
 				}
 			}
+			.navigationTitle(project.name)
+			#if os(iOS)
 			.toolbar {
 				ToolbarItemGroup(placement: .bottomBar) {
 					Spacer()
@@ -53,9 +56,20 @@ struct ProjectView: View {
 						Label("Create New Task", systemImage: "plus.square")
 					}
 				}
+				ToolbarItem(placement: .navigationBarTrailing) {
+					Menu {
+						Button {
+							openEditProjectSheet.toggle()
+						} label: {
+							Label("Edit Project", systemImage: "pencil")
+						}
+					} label: {
+						Label("Project Options", systemImage: "ellipsis.circle")
+					}
+				}
 			}
-			.navigationTitle(project.name)
 			.navigationBarTitleDisplayMode(.large)
+			#endif
 			.inspector(isPresented: $openTaskDetailsInspector) {
 				if let task = selectedTask {
 					TaskDetailsView(todo: task)
@@ -67,13 +81,16 @@ struct ProjectView: View {
 			.sheet(isPresented: $openCreateTaskSheet) {
 				CreateTodoView(project: .constant(project))
 			}
+			.sheet(isPresented: $openEditProjectSheet) {
+				CreateProjectView(project: project)
+			}
 		}
     }
 }
 
 #Preview {
 	
-	var NewProject = Project(id: UUID(), name: "New Project", notes: "New Project Description", dueDate: Date.now, deadLine: Date.now, status: .inProgress, icon: "xmark.circle.fill", color: ProjectColors(rawValue: "red")!)
+	let NewProject = Project(id: UUID(), name: "New Project", notes: "New Project Description", dueDate: Date.now, deadLine: Date.now, status: .inProgress, icon: "xmark.circle.fill", color: ProjectColors(rawValue: "red")!)
 	
 	ProjectView(project: NewProject)
 }

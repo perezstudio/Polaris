@@ -95,7 +95,7 @@ struct TaskDateView: View {
 
 #Preview {
 	@Previewable @State var picker: Bool = false
-	var newProject = Project(
+	let newProject = Project(
 		id: UUID(),
 		name: "New Project",
 		notes: "Description",
@@ -103,7 +103,7 @@ struct TaskDateView: View {
 		icon: "square.stack",
 		color: .red
 	)
-	var newTodo = Todo(
+	let newTodo = Todo(
 		title: "New Task",
 		status: false,
 		notes: "Description",

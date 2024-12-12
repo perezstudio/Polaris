@@ -33,7 +33,8 @@ struct ProjectPickerView: View {
 				}
 			}
 			.navigationTitle("Select A Project")
-			.navigationBarTitleDisplayMode(.inline)
+			#if os(iOS)
+			.navigationBarTitleDisplayMode(.large)
 			.toolbar {
 				ToolbarItem(placement: .topBarTrailing) {
 					Button {
@@ -54,6 +55,7 @@ struct ProjectPickerView: View {
 					}
 				}
 			}
+			#endif
 		}
     }
 }

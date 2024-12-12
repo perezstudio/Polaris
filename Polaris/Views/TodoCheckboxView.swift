@@ -37,11 +37,12 @@ struct TodoCheckboxView: View {
     }
 }
 
-#Preview {
-	
-	var newProject = Project(id: UUID(), name: "New Project", notes: "Description", status: .inProgress, icon: "square.stack", color: ProjectColors.red)
-	@State var newTodo = Todo(title: "New Task", status: false, notes: "Description", project: newProject, inbox: false)
-	
-	TodoCheckboxView(isChecked: $newTodo.status)
-		.modelContainer(for: [Todo.self, Project.self], inMemory: true)
-}
+//#Preview {
+//	
+//	@State var newTodo = Todo(title: "New Task", status: false, notes: "Description", project: newProject, inbox: false)
+//	
+//	var newProject = Project(id: UUID(), name: "New Project", notes: "Description", status: .inProgress, icon: "square.stack", color: ProjectColors.red)
+//	
+//	TodoCheckboxView(isChecked: $newTodo.status)
+//		.modelContainer(for: [Todo.self, Project.self], inMemory: true)
+//}

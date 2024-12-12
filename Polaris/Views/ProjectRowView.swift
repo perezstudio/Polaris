@@ -38,7 +38,7 @@ struct ProjectRowView: View {
 
 #Preview {
 	
-	var newProject = Project(id: UUID(), name: "New Project", notes: "plus", dueDate: nil, deadLine: nil, status: .inProgress, icon: "plus", color: ProjectColors(rawValue: "red") ?? .red)
+	let newProject = Project(id: UUID(), name: "New Project", notes: "plus", dueDate: nil, deadLine: nil, status: .inProgress, icon: "plus", color: ProjectColors(rawValue: "red") ?? .red)
 	
 	ProjectRowView(project: newProject)
 }

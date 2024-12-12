@@ -17,8 +17,46 @@ struct ProjectPickerView: View {
 		NavigationStack {
 			List {
 				Section {
-					Text("No Project")
-					Text("Inbox")
+					HStack(spacing: 10) {
+						ZStack {
+							RoundedRectangle(cornerRadius: 6)
+								.strokeBorder(Color.blue,
+									lineWidth: 1
+								)
+								.background(
+									RoundedRectangle(cornerRadius: 10)
+										.fill(Color.blue.opacity(0.15))
+								)
+								.frame(width: 30, height: 30)
+							
+							Image(systemName: "tray.fill")
+								.font(.system(size: 16))
+								.fontWeight(.semibold)
+								.foregroundColor(Color.blue)
+						}
+						Text("Inbox")
+					}
+					.padding(.vertical, 4)
+					HStack(spacing: 10) {
+						ZStack {
+							RoundedRectangle(cornerRadius: 6)
+								.strokeBorder(Color.blue,
+									lineWidth: 1
+								)
+								.background(
+									RoundedRectangle(cornerRadius: 10)
+										.fill(Color.blue.opacity(0.15))
+								)
+								.frame(width: 30, height: 30)
+							
+							Image(systemName: "xmark.square")
+								.font(.system(size: 16))
+								.fontWeight(.semibold)
+								.foregroundColor(Color.blue)
+						}
+						Text("No Project")
+					}
+					.padding(.vertical, 4)
 				}
 				Section {
 					if(projects.isEmpty) {

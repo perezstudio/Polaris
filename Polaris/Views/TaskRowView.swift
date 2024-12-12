@@ -12,8 +12,9 @@ struct TaskRowView: View {
 	@Bindable var todo: Todo
 	
     var body: some View {
-		HStack(spacing: 16) {
+		HStack(alignment: .top, spacing: 16) {
 			TodoCheckboxView(isChecked: $todo.status)
+				.padding(.top, 4)
 			VStack(alignment: .leading) {
 				Text(todo.title)
 					.fontWeight(.semibold)
@@ -23,7 +24,9 @@ struct TaskRowView: View {
 				}
 			}
 			.foregroundStyle(Color.primary)
+			.padding(.top, 4)
 		}
+		.frame(alignment: .topLeading)
 		.padding(.vertical, 8)
     }
 }

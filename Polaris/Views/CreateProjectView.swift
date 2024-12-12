@@ -24,6 +24,9 @@ struct CreateProjectView: View {
 	@State private var icon: String
 	@State private var color: ProjectColors
 	
+	// Add this property
+	@FocusState private var isTitleFocused: Bool
+	
 	// Initialize all state variables based on whether we're editing or creating
 	init(project: Project? = nil) {
 		self.projectToEdit = project
@@ -45,6 +48,7 @@ struct CreateProjectView: View {
 			Form {
 				Section {
 					TextField("Project Name", text: $title)
+						.focused($isTitleFocused)
 				}
 				
 				Section {
@@ -58,15 +62,12 @@ struct CreateProjectView: View {
 					}
 				}
 				
-				Section {
+				Section(header: Text("Project Details")) {
 					Picker("Status", selection: $status) {
 						ForEach(Status.allCases) { status in
 							Text(status.name).tag(status)
 						}
 					}
-				}
-				
-				Section {
 					Picker("Color", selection: $color) {
 						ForEach(ProjectColors.allCases) { color in
 							Text(color.name).tag(color)
@@ -74,20 +75,37 @@ struct CreateProjectView: View {
 					}
 				}
 				
-				Section {
+				Section(header: Text("Notes")) {
 					Text(notes)
+						.padding(.vertical, 8)
 				}
 				
-				Section {
+			}
+			.navigationTitle(projectToEdit != nil ? "Edit Project" : "Create Project")
+			.navigationBarTitleDisplayMode(.inline)
+			.safeAreaInset(edge: .bottom) {
+				HStack {
+					if isTitleFocused {
+						Button {
+							isTitleFocused = false
+						} label: {
+							Label("Dismiss Keyboard", systemImage: "keyboard.chevron.compact.down")
+								.labelStyle(.iconOnly)
+						}
+					}
+					Spacer()
 					Button {
 						saveProject()
 					} label: {
-						Label(projectToEdit != nil ? "Update Project" : "Create Project",
-							  systemImage: "rectangle.stack")
+						Label(
+							projectToEdit != nil ? "Update Project" : "Create Project",
+							systemImage: "rectangle.stack.badge.plus"
+						)
 					}
 				}
+				.padding()
+				.background(.bar)
 			}
-			.navigationTitle(projectToEdit != nil ? "Edit Project" : "Create Project")
 			.toolbar {
 				#if os(iOS)
 				ToolbarItem(placement: .navigationBarTrailing) {
@@ -98,6 +116,9 @@ struct CreateProjectView: View {
 					}
 				}
 				#endif
+			}
+			.onAppear {
+				isTitleFocused = true
 			}
 		}
 	}

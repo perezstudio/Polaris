@@ -8,6 +8,13 @@
 import SwiftUI
 import SwiftData
 
+// Add this enum before the CreateTodoView struct
+enum Field: Hashable {
+	case title
+	case notes
+	case none
+}
+
 struct CreateTodoView: View {
 	@Environment(\.modelContext) var modelContext
 	@Environment(\.dismiss) var dismiss
@@ -21,10 +28,14 @@ struct CreateTodoView: View {
 	@State var inbox: Bool = false
 	@Binding var project: Project?
 	@State private var selectedProject: Project?
+	// Replace existing focus state with this
+	@FocusState private var focusedField: Field?
 
 	init(project: Binding<Project?> = .constant(nil)) {
 		_project = project
 		_selectedProject = State(initialValue: project.wrappedValue)
+		// Set inbox to true by default if no project is provided
+		_inbox = State(initialValue: project.wrappedValue == nil)
 	}
 	
 	var body: some View {
@@ -32,6 +43,7 @@ struct CreateTodoView: View {
 			Form {
 				Section {
 					TextField("Task Title", text: $title)
+						.focused($focusedField, equals: .title)
 				}
 				Section {
 					Toggle("Enable Due Date", isOn: $enableDueDate)
@@ -43,29 +55,90 @@ struct CreateTodoView: View {
 						DatePicker("Date Line", selection: $dateLine)
 					}
 				}
-				Section {
-					Toggle("Add to Inbox", isOn: $inbox)
-					if(!inbox) {
-						Picker("Project", selection: $selectedProject) {
-							Text("No Project").tag(nil as Project?)
-							ForEach(projects) { project in
-								Text(project.name).tag(project as Project?)
+				Section(header: Text("Project")) {
+					NavigationLink {
+						ProjectSelectionView(
+							selectedProject: $selectedProject,
+							inbox: $inbox
+						)
+						.navigationTitle("Select Project")
+					} label: {
+						HStack {
+							if inbox {
+								HStack(spacing: 10) {
+									ZStack {
+										RoundedRectangle(cornerRadius: 6)
+											.strokeBorder(Color.blue,
+												lineWidth: 1
+											)
+											.background(
+												RoundedRectangle(cornerRadius: 10)
+													.fill(Color.blue.opacity(0.15))
+											)
+											.frame(width: 30, height: 30)
+										
+										Image(systemName: "tray")
+											.font(.system(size: 16))
+											.fontWeight(.semibold)
+											.foregroundColor(Color.blue)
+									}
+									Text("Inbox")
+								}
+								.padding(.vertical, 4)
+							} else if let project = selectedProject {
+								ProjectRowView(project: project)
+							} else {
+								HStack(spacing: 10) {
+									ZStack {
+										RoundedRectangle(cornerRadius: 6)
+											.strokeBorder(Color.blue,
+												lineWidth: 1
+											)
+											.background(
+												RoundedRectangle(cornerRadius: 10)
+													.fill(Color.blue.opacity(0.15))
+											)
+											.frame(width: 30, height: 30)
+										
+										Image(systemName: "xmark.square")
+											.font(.system(size: 16))
+											.fontWeight(.semibold)
+											.foregroundColor(Color.blue)
+									}
+									Text("No Project")
+								}
+								.padding(.vertical, 4)
 							}
+							Spacer()
 						}
 					}
 				}
 				Section(header: Text("Notes")) {
 					TextEditor(text: $notes)
+						.focused($focusedField, equals: .notes)
+						.padding(.vertical, 8)
 				}
-				Section {
+			}
+			.safeAreaInset(edge: .bottom) {
+				HStack {
+					if focusedField != nil { // Update keyboard check
+						Button {
+							focusedField = nil // Dismiss keyboard
+						} label: {
+							Label("Dismiss Keyboard", systemImage: "keyboard.chevron.compact.down")
+								.labelStyle(.iconOnly)
+						}
+					}
+					Spacer()
 					Button {
 						createTodo()
 					} label: {
-						Label("Create Todo", systemImage: "plus")
+						Label("Create Todo", systemImage: "plus.square")
 					}
 				}
+				.padding()
+				.background(.bar)
 			}
-			.navigationTitle("Create Todo")
 			.toolbar {
 				#if os(iOS)
 				ToolbarItem(placement: .navigationBarTrailing) {
@@ -76,6 +149,9 @@ struct CreateTodoView: View {
 					}
 				}
 				#endif
+			}
+			.onAppear {
+				focusedField = .title // Update initial focus
 			}
 		}
 	}

@@ -66,10 +66,12 @@ struct InboxFilterView: View {
 			#endif
 		}
 		.navigationTitle("Inbox")
+		#if os(iOS)
 		.navigationBarTitleDisplayMode(.large)
+		#endif
 		.inspector(isPresented: $openTaskDetailsInspector) {
 			if let task = selectedTask {
-				TaskDetailsView(todo: task)
+				TaskDetailsView(todo: task, sheetState: $openTaskDetailsInspector)
 			} else {
 				ContentUnavailableView("No Task Selected",
 					systemImage: "checklist")

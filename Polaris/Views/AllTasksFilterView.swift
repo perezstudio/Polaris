@@ -47,38 +47,15 @@ struct AllTasksFilterView: View {
 		}
 	}
 	
-    var body: some View {
+	var body: some View {
 		List {
-			if todos.isEmpty {
-				ContentUnavailableView {
-					Label("No Tasks", systemImage: "checkmark.square")
-				} description: {
-					Text("Create a new task to see it listed in your project.")
-				} actions: {
-					Button {
-						openCreateTaskSheet.toggle()
-					} label: {
-						Label("Create New Task", systemImage: "plus.square")
-					}
-				}
-			} else {
-				ForEach(groupedTasks, id: \.key) { group in
-					Section(group.key) {
-						ForEach(group.tasks) { todo in
-							Button {
-								if(selectedTask == todo) {
-									openTaskDetailsInspector.toggle()
-								} else {
-									selectedTask = todo
-									openTaskDetailsInspector = true
-								}
-							} label: {
-								TaskRowView(todo: todo)
-							}
-						}
-					}
-				}
-			}
+			TaskListContent(
+				todos: todos,
+				groupedTasks: groupedTasks,
+				selectedTask: $selectedTask,
+				openTaskDetailsInspector: $openTaskDetailsInspector,
+				openCreateTaskSheet: $openCreateTaskSheet
+			)
 		}
 		#if os(iOS)
 		.toolbar {
@@ -93,10 +70,12 @@ struct AllTasksFilterView: View {
 		}
 		#endif
 		.navigationTitle("All My Tasks")
+		#if os(iOS)
 		.navigationBarTitleDisplayMode(.large)
+		#endif
 		.inspector(isPresented: $openTaskDetailsInspector) {
 			if let task = selectedTask {
-				TaskDetailsView(todo: task)
+				TaskDetailsView(todo: task, sheetState: $openTaskDetailsInspector)
 			} else {
 				ContentUnavailableView("No Task Selected",
 					systemImage: "checklist")
@@ -105,8 +84,9 @@ struct AllTasksFilterView: View {
 		.sheet(isPresented: $openCreateTaskSheet) {
 			CreateTodoView()
 		}
-    }
+	}
 }
+
 
 //#Preview {
 //    AllTasksFilterView()

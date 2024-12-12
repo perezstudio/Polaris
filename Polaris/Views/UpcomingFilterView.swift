@@ -32,9 +32,9 @@ struct UpcomingFilterView: View {
 	@State private var listScrollTarget: Date?
 	@State private var visibleHeaderDate: Date? = nil
 	@State private var headerFrames: [DateFrame] = []
-	@State var openCreateTaskSheet: Bool = false
-	@State var openTaskDetailsInspector: Bool = false
-	@State var selectedTask: Todo? = nil
+	@State private var openCreateTaskSheet: Bool = false
+	@State private var openTaskDetailsInspector: Bool = false
+	@State private var selectedTask: Todo? = nil
 	
 	@State private var scrollViewWidth: CGFloat = 0
 	@State private var additionalWeeks: Int = 0
@@ -96,10 +96,14 @@ struct UpcomingFilterView: View {
 	private func scrollToDate(_ date: Date) {
 		withAnimation {
 			selectedDate = date
-			DispatchQueue.main.async {
-				scrollTarget = "week_\(currentWeekIndex)"
-				listScrollTarget = date
-			}
+		}
+		
+		DispatchQueue.main.async {
+			scrollTarget = "week_\(currentWeekIndex)"
+		}
+		
+		DispatchQueue.main.async {
+			listScrollTarget = date
 		}
 	}
 	
@@ -141,7 +145,7 @@ struct UpcomingFilterView: View {
 				}
 				.frame(height: 80)
 				.background(Color.secondary.opacity(0.1))
-				.onChange(of: selectedDate) { _ in
+				.onChange(of: selectedDate, initial: false) { oldValue, newValue in
 					withAnimation {
 						proxy.scrollTo("week_\(currentWeekIndex)", anchor: .leading)
 						loadMoreWeeksIfNeeded(currentWeekIndex: currentWeekIndex)
@@ -176,8 +180,8 @@ struct UpcomingFilterView: View {
 				}
 				.scrollTargetBehavior(.viewAligned)
 				.coordinateSpace(name: "scroll")
-				.onChange(of: listScrollTarget) { target in
-					if let target = target {
+				.onChange(of: listScrollTarget, initial: false) { oldValue, newValue in
+					if let target = newValue {
 						withAnimation {
 							proxy.scrollTo("header_\(target)", anchor: .top)
 						}
@@ -214,7 +218,7 @@ struct UpcomingFilterView: View {
 		}
 		.inspector(isPresented: $openTaskDetailsInspector) {
 			if let task = selectedTask {
-				TaskDetailsView(todo: task)
+				TaskDetailsView(todo: task, sheetState: $openTaskDetailsInspector)
 			} else {
 				ContentUnavailableView("No Task Selected", systemImage: "checklist")
 			}

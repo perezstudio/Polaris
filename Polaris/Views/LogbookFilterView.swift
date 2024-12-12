@@ -14,41 +14,34 @@ struct LogbookFilterView: View {
 		filter: #Predicate<Todo> { todo in
 			todo.status == true
 		},
-		sort: \Todo.dueDate,
+		sort: \Todo.createdDate,
+		order: .reverse,
 		animation: .snappy
 	) private var completedTodos: [Todo]
 	@State var openCreateTaskSheet: Bool = false
 	@State var openTaskDetailsInspector: Bool = false
 	@State var selectedTask: Todo? = nil
 	
-	// Create dictionary grouping based on due dates
+	// Create dictionary grouping based on created dates
 	private var groupedTodos: [String: [Todo]] {
 		Dictionary(grouping: completedTodos) { todo in
-			// Handle optional dueDate
-			if let dueDate = todo.dueDate {
-				return formatDate(dueDate)
-			} else {
-				return "No Due Date"
-			}
+			formatDate(todo.createdDate)
 		}
 	}
 	
 	// Get sorted dates for sections
 	private var sortedDates: [String] {
 		groupedTodos.keys.sorted { date1, date2 in
-			if date1 == "No Due Date" { return false }
-			if date2 == "No Due Date" { return true }
-			
 			// Convert back to Date for proper sorting
 			let formatter = DateFormatter()
 			formatter.dateFormat = "MMMM d, yyyy"
 			let d1 = formatter.date(from: date1) ?? Date.distantPast
 			let d2 = formatter.date(from: date2) ?? Date.distantPast
-			return d1 < d2
+			return d1 > d2
 		}
 	}
 	
-    var body: some View {
+	var body: some View {
 		List {
 			if(sortedDates.isEmpty) {
 				Section {
@@ -78,7 +71,7 @@ struct LogbookFilterView: View {
 		#endif
 		.inspector(isPresented: $openTaskDetailsInspector) {
 			if let task = selectedTask {
-				TaskDetailsView(todo: task)
+				TaskDetailsView(todo: task, sheetState: $openTaskDetailsInspector)
 			} else {
 				ContentUnavailableView("No Task Selected",
 					systemImage: "checklist")
@@ -87,7 +80,7 @@ struct LogbookFilterView: View {
 		.sheet(isPresented: $openCreateTaskSheet) {
 			CreateTodoView()
 		}
-    }
+	}
 	
 	private func formatDate(_ date: Date) -> String {
 		let formatter = DateFormatter()
@@ -98,5 +91,5 @@ struct LogbookFilterView: View {
 }
 
 #Preview {
-    LogbookFilterView()
+	LogbookFilterView()
 }

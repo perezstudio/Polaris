@@ -14,6 +14,7 @@ public enum Status: String, Codable, CaseIterable, Identifiable {
 	case inProgress
 	case completed
 	case cancelled
+	case archived
 	
 	public var id: Self { self }
 	
@@ -23,6 +24,7 @@ public enum Status: String, Codable, CaseIterable, Identifiable {
 			case .inProgress: return "In Progress"
 			case .completed: return "Completed"
 			case .cancelled: return "Cancelled"
+			case .archived: return "Archived"
 		}
 	}
 }
@@ -85,3 +87,4 @@ enum TodoFilter {
 	case upcoming
 	case completed
 }
+

@@ -33,7 +33,7 @@ struct UpcomingFilterView: View {
 		todo.status == false && todo.dueDate != nil
 	}, sort: \Todo.dueDate) private var todos: [Todo]
 	
-	@State private var selectedDate: Date = Calendar.current.startOfDay(for: .now)
+	@State private var selectedDate: Date = Date.now
 	@State private var scrollTarget: String?
 	@State private var listScrollTarget: Date?
 	@State private var visibleHeaderDate: Date? = nil
@@ -48,11 +48,16 @@ struct UpcomingFilterView: View {
 	// Keep computed properties
 	private var visibleDates: [Date] {
 		let calendar = Calendar.current
-		let startOfCurrentWeek = calendar.date(
-			from: calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: .now)
-		) ?? .now
+		// Get the first day of the current week
+		let today = Date.now
+		let weekday = calendar.component(.weekday, from: today)
+		let daysToSubtract = weekday - calendar.firstWeekday
+		let startOfCurrentWeek = calendar.date(byAdding: .day, value: -daysToSubtract, to: today)!
+		
+		// Calculate visible range
 		let startDate = calendar.date(byAdding: .day, value: -21, to: startOfCurrentWeek)!
-		let endDate = calendar.date(byAdding: .day, value: 21, to: startOfCurrentWeek)!
+		let endDate = calendar.date(byAdding: .day, value: 42, to: startOfCurrentWeek)!
+		
 		return calendar.generateDates(
 			inside: DateInterval(start: startDate, end: endDate),
 			matching: DateComponents(hour: 0, minute: 0, second: 0)
@@ -147,6 +152,7 @@ struct UpcomingFilterView: View {
 							}
 						}
 					}
+					.scrollTargetLayout()
 				}
 				.scrollTargetBehavior(.viewAligned)
 				.coordinateSpace(name: "scroll")
@@ -182,6 +188,9 @@ struct UpcomingFilterView: View {
 			} else {
 				ContentUnavailableView("No Task Selected", systemImage: "checklist")
 			}
+		}
+		.onAppear {
+			scrollTarget = "week_\(currentWeekIndex)"
 		}
 	}
 }

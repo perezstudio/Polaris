@@ -66,6 +66,7 @@ struct InboxFilterView: View {
 			#endif
 		}
 		.navigationTitle("Inbox")
+		.navigationBarTitleDisplayMode(.large)
 		.inspector(isPresented: $openTaskDetailsInspector) {
 			if let task = selectedTask {
 				TaskDetailsView(todo: task)
@@ -80,6 +81,6 @@ struct InboxFilterView: View {
     }
 }
 
-#Preview {
-    InboxFilterView()
-}
+//#Preview {
+//    InboxFilterView()
+//}

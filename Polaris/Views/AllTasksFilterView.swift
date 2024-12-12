@@ -93,6 +93,7 @@ struct AllTasksFilterView: View {
 		}
 		#endif
 		.navigationTitle("All My Tasks")
+		.navigationBarTitleDisplayMode(.large)
 		.inspector(isPresented: $openTaskDetailsInspector) {
 			if let task = selectedTask {
 				TaskDetailsView(todo: task)
@@ -107,6 +108,6 @@ struct AllTasksFilterView: View {
     }
 }
 
-#Preview {
-    AllTasksFilterView()
-}
+//#Preview {
+//    AllTasksFilterView()
+//}

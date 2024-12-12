@@ -69,6 +69,11 @@ struct MainMenuView: View {
 						Label("Add Project", systemImage: "rectangle.stack.badge.plus")
 					}
 					Spacer()
+					Button {
+						openCreateTaskSheet.toggle()
+					} label: {
+						Label("Create New Task", systemImage: "plus.square")
+					}
 				}
 #endif
 			}
@@ -107,10 +112,10 @@ struct MainMenuView: View {
 	
 }
 
-#Preview {
-	@Previewable @State var newProject = Project(id: UUID(), name: "New Project", notes: "", status: .inProgress , icon: "square.and.arrow.up.fill", color: ProjectColors(rawValue: "red")!)
-	
-	MainMenuView(selectedProject: .constant(newProject))
-		.modelContainer(for: Project.self, inMemory: true)
-	
-}
+//#Preview {
+//	@Previewable @State var newProject = Project(id: UUID(), name: "New Project", notes: "", status: .inProgress , icon: "square.and.arrow.up.fill", color: ProjectColors(rawValue: "red")!)
+//	
+//	MainMenuView(selectedProject: .constant(newProject))
+//		.modelContainer(for: Project.self, inMemory: true)
+//	
+//}

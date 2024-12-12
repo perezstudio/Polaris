@@ -1,10 +1,6 @@
-// Update imports
 import SwiftUI
 import SwiftData
 
-// Remove ScrollPositionPreferenceKey and DateFrame as they're now in ScrollPositionTypes.swift
-
-// Keep Calendar extension
 private extension Calendar {
 	func generateDates(inside interval: DateInterval, matching components: DateComponents) -> [Date] {
 		var dates: [Date] = []
@@ -26,9 +22,7 @@ private extension Calendar {
 	}
 }
 
-// Main view
 struct UpcomingFilterView: View {
-	// Keep existing properties
 	@Query(filter: #Predicate<Todo> { todo in
 		todo.status == false && todo.dueDate != nil
 	}, sort: \Todo.dueDate) private var todos: [Todo]
@@ -42,21 +36,19 @@ struct UpcomingFilterView: View {
 	@State var openTaskDetailsInspector: Bool = false
 	@State var selectedTask: Todo? = nil
 	
-	// Add geometry reader size state
 	@State private var scrollViewWidth: CGFloat = 0
+	@State private var additionalWeeks: Int = 0
+	@State private var isLoadingMoreWeeks: Bool = false
 	
-	// Keep computed properties
 	private var visibleDates: [Date] {
 		let calendar = Calendar.current
-		// Get the first day of the current week
 		let today = Date.now
 		let weekday = calendar.component(.weekday, from: today)
 		let daysToSubtract = weekday - calendar.firstWeekday
 		let startOfCurrentWeek = calendar.date(byAdding: .day, value: -daysToSubtract, to: today)!
 		
-		// Calculate visible range
 		let startDate = calendar.date(byAdding: .day, value: -21, to: startOfCurrentWeek)!
-		let endDate = calendar.date(byAdding: .day, value: 42, to: startOfCurrentWeek)!
+		let endDate = calendar.date(byAdding: .day, value: 42 + (additionalWeeks * 7), to: startOfCurrentWeek)!
 		
 		return calendar.generateDates(
 			inside: DateInterval(start: startDate, end: endDate),
@@ -85,7 +77,6 @@ struct UpcomingFilterView: View {
 		}
 	}
 	
-	// Add property to track current week index
 	private var currentWeekIndex: Int {
 		weekGroups.firstIndex(where: { week in
 			week.contains(where: { Calendar.current.isDate($0, inSameDayAs: selectedDate) })
@@ -96,9 +87,37 @@ struct UpcomingFilterView: View {
 		Calendar.current.isDate(selectedDate, inSameDayAs: .now)
 	}
 	
+	private var currentMonthText: String {
+		let formatter = DateFormatter()
+		formatter.dateFormat = "MMMM yyyy"
+		return formatter.string(from: selectedDate)
+	}
+	
+	private func scrollToDate(_ date: Date) {
+		withAnimation {
+			selectedDate = date
+			DispatchQueue.main.async {
+				scrollTarget = "week_\(currentWeekIndex)"
+				listScrollTarget = date
+			}
+		}
+	}
+	
+	private func loadMoreWeeksIfNeeded(currentWeekIndex: Int) {
+		let threshold = weekGroups.count - 2
+		if currentWeekIndex >= threshold && !isLoadingMoreWeeks {
+			isLoadingMoreWeeks = true
+			withAnimation {
+				additionalWeeks += 2
+			}
+			DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+				isLoadingMoreWeeks = false
+			}
+		}
+	}
+	
 	var body: some View {
 		VStack(spacing: 0) {
-			// Calendar view
 			ScrollViewReader { proxy in
 				GeometryReader { geometry in
 					ScrollView(.horizontal, showsIndicators: false) {
@@ -108,10 +127,7 @@ struct UpcomingFilterView: View {
 									dates: dates,
 									selectedDate: selectedDate,
 									onDateSelected: { date in
-										withAnimation {
-											selectedDate = date
-											listScrollTarget = date
-										}
+										scrollToDate(date)
 									}
 								)
 								.frame(width: geometry.size.width)
@@ -128,11 +144,11 @@ struct UpcomingFilterView: View {
 				.onChange(of: selectedDate) { _ in
 					withAnimation {
 						proxy.scrollTo("week_\(currentWeekIndex)", anchor: .leading)
+						loadMoreWeeksIfNeeded(currentWeekIndex: currentWeekIndex)
 					}
 				}
 			}
 			
-			// Task list
 			ScrollViewReader { proxy in
 				ScrollView {
 					LazyVStack(spacing: 0, pinnedViews: .sectionHeaders) {
@@ -169,7 +185,7 @@ struct UpcomingFilterView: View {
 				}
 			}
 		}
-		.navigationTitle("Upcoming")
+		.navigationTitle(currentMonthText)
 		#if os(iOS)
 		.navigationBarTitleDisplayMode(.inline)
 		.toolbar {
@@ -177,10 +193,7 @@ struct UpcomingFilterView: View {
 				if !isSelectedDateToday {
 					Button {
 						let today = Calendar.current.startOfDay(for: .now)
-						withAnimation {
-							selectedDate = today
-							listScrollTarget = today
-						}
+						scrollToDate(today)
 					} label: {
 						Text("Today")
 					}
@@ -210,8 +223,7 @@ struct UpcomingFilterView: View {
 			let today = Calendar.current.startOfDay(for: .now)
 			selectedDate = today
 			DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-				scrollTarget = "week_\(currentWeekIndex)"
-				listScrollTarget = today
+				scrollToDate(today)
 			}
 		}
 	}

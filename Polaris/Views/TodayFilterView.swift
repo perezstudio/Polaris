@@ -84,6 +84,7 @@ struct TodayFilterView: View {
 #endif
 		}
 		.navigationTitle("Today")
+		.navigationBarTitleDisplayMode(.large)
 		.inspector(isPresented: $openTaskDetailsInspector) {
 			if let task = selectedTask {
 				TaskDetailsView(todo: task)

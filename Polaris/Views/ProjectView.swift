@@ -14,11 +14,20 @@ struct ProjectView: View {
 	@State var openTaskDetailsInspector: Bool = false
 	@State var selectedTask: Todo? = nil
 	@State var openEditProjectSheet: Bool = false
+	@State private var showCompletedTasks: Bool = false
 	
-    var body: some View {
+	private var incompleteTasks: [Todo] {
+		project.todos.filter { !$0.status }
+	}
+	
+	private var completedTasks: [Todo] {
+		project.todos.filter { $0.status }
+	}
+	
+	var body: some View {
 		VStack {
 			List {
-				if(project.todos.isEmpty) {
+				if(project.todos.isEmpty || (!showCompletedTasks && incompleteTasks.isEmpty)) {
 					ContentUnavailableView {
 						Label("No Tasks", systemImage: "checkmark.square")
 					} description: {
@@ -31,16 +40,35 @@ struct ProjectView: View {
 						}
 				   }
 				} else {
-					ForEach(project.todos) { todo in
-						Button {
-							if(selectedTask == todo) {
-								openTaskDetailsInspector.toggle()
-							} else {
-								selectedTask = todo
-								openTaskDetailsInspector = true
+					Section {
+						ForEach(incompleteTasks) { todo in
+							Button {
+								if(selectedTask == todo) {
+									openTaskDetailsInspector.toggle()
+								} else {
+									selectedTask = todo
+									openTaskDetailsInspector = true
+								}
+							} label: {
+								TaskRowView(todo: todo)
 							}
-						} label: {
-							TaskRowView(todo: todo)
+						}
+					}
+					
+					if showCompletedTasks && !completedTasks.isEmpty {
+						Section("Completed Tasks") {
+							ForEach(completedTasks) { todo in
+								Button {
+									if(selectedTask == todo) {
+										openTaskDetailsInspector.toggle()
+									} else {
+										selectedTask = todo
+										openTaskDetailsInspector = true
+									}
+								} label: {
+									TaskRowView(todo: todo)
+								}
+							}
 						}
 					}
 				}
@@ -48,16 +76,16 @@ struct ProjectView: View {
 			.navigationTitle(project.name)
 			#if os(iOS)
 			.toolbar {
-				ToolbarItemGroup(placement: .bottomBar) {
-					Spacer()
-					Button {
-						openCreateTaskSheet.toggle()
-					} label: {
-						Label("Create New Task", systemImage: "plus.square")
-					}
-				}
 				ToolbarItem(placement: .navigationBarTrailing) {
 					Menu {
+						Button {
+							showCompletedTasks.toggle()
+						} label: {
+							Label(
+								showCompletedTasks ? "Hide Completed Tasks" : "Show Completed Tasks",
+								systemImage: showCompletedTasks ? "eye.slash" : "eye"
+							)
+						}
 						Button {
 							openEditProjectSheet.toggle()
 						} label: {
@@ -65,6 +93,14 @@ struct ProjectView: View {
 						}
 					} label: {
 						Label("Project Options", systemImage: "ellipsis.circle")
+					}
+				}
+				ToolbarItemGroup(placement: .bottomBar) {
+					Spacer()
+					Button {
+						openCreateTaskSheet.toggle()
+					} label: {
+						Label("Create New Task", systemImage: "plus.square")
 					}
 				}
 			}
@@ -85,7 +121,7 @@ struct ProjectView: View {
 				CreateProjectView(project: project)
 			}
 		}
-    }
+	}
 }
 
 #Preview {

@@ -33,7 +33,7 @@ struct UpcomingFilterView: View {
 		todo.status == false && todo.dueDate != nil
 	}, sort: \Todo.dueDate) private var todos: [Todo]
 	
-	@State private var selectedDate: Date = Date.now
+	@State private var selectedDate: Date = Calendar.current.startOfDay(for: .now)
 	@State private var scrollTarget: String?
 	@State private var listScrollTarget: Date?
 	@State private var visibleHeaderDate: Date? = nil
@@ -92,6 +92,10 @@ struct UpcomingFilterView: View {
 		}) ?? 0
 	}
 	
+	private var isSelectedDateToday: Bool {
+		Calendar.current.isDate(selectedDate, inSameDayAs: .now)
+	}
+	
 	var body: some View {
 		VStack(spacing: 0) {
 			// Calendar view
@@ -123,7 +127,7 @@ struct UpcomingFilterView: View {
 				.background(Color.secondary.opacity(0.1))
 				.onChange(of: selectedDate) { _ in
 					withAnimation {
-						proxy.scrollTo("week_\(currentWeekIndex)", anchor: .center)
+						proxy.scrollTo("week_\(currentWeekIndex)", anchor: .leading)
 					}
 				}
 			}
@@ -169,6 +173,19 @@ struct UpcomingFilterView: View {
 		#if os(iOS)
 		.navigationBarTitleDisplayMode(.inline)
 		.toolbar {
+			ToolbarItem(placement: .topBarTrailing) {
+				if !isSelectedDateToday {
+					Button {
+						let today = Calendar.current.startOfDay(for: .now)
+						withAnimation {
+							selectedDate = today
+							listScrollTarget = today
+						}
+					} label: {
+						Text("Today")
+					}
+				}
+			}
 			ToolbarItemGroup(placement: .bottomBar) {
 				Spacer()
 				Button {
@@ -190,9 +207,12 @@ struct UpcomingFilterView: View {
 			}
 		}
 		.onAppear {
-			scrollTarget = "week_\(currentWeekIndex)"
+			let today = Calendar.current.startOfDay(for: .now)
+			selectedDate = today
+			DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+				scrollTarget = "week_\(currentWeekIndex)"
+				listScrollTarget = today
+			}
 		}
 	}
 }
-
-// End of file

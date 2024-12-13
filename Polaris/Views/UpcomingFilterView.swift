@@ -216,7 +216,7 @@ struct UpcomingFilterView: View {
 		.sheet(isPresented: $openCreateTaskSheet) {
 			CreateTodoView()
 		}
-		.inspector(isPresented: $openTaskDetailsInspector) {
+		.sheet(isPresented: $openTaskDetailsInspector) {
 			if let task = selectedTask {
 				TaskDetailsView(todo: task, sheetState: $openTaskDetailsInspector)
 			} else {

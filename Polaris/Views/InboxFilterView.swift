@@ -69,7 +69,7 @@ struct InboxFilterView: View {
 		#if os(iOS)
 		.navigationBarTitleDisplayMode(.large)
 		#endif
-		.inspector(isPresented: $openTaskDetailsInspector) {
+		.sheet(isPresented: $openTaskDetailsInspector) {
 			if let task = selectedTask {
 				TaskDetailsView(todo: task, sheetState: $openTaskDetailsInspector)
 			} else {

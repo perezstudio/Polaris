@@ -211,7 +211,7 @@ struct ProjectView: View {
 				}
 			}
 			#endif
-			.inspector(isPresented: $openTaskDetailsInspector) {
+			.sheet(isPresented: $openTaskDetailsInspector) {
 				if let task = selectedTask {
 					TaskDetailsView(todo: task, sheetState: $openTaskDetailsInspector)
 				} else {

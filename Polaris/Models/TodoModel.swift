@@ -1,10 +1,3 @@
-//
-//  TodoModel.swift
-//  Polaris
-//
-//  Created by Kevin Perez on 10/18/24.
-//
-
 import SwiftUI
 import SwiftData
 
@@ -12,23 +5,22 @@ import SwiftData
 class Todo {
 	var id: UUID
 	var title: String
-	var status: Bool
 	var notes: String
+	var status: Bool
 	var dueDate: Date?
-	var deadLine: Date?
-	@Relationship(inverse: \Project.todos) var project: Project?
+	var deadLineDate: Date?
 	var inbox: Bool
-	var createdDate: Date
+	@Relationship(deleteRule: .nullify, inverse: \Project.todos) var project: [Project] = []
+	var created: Date = Date()
 	
-	init(id: UUID = UUID(), title: String, status: Bool, notes: String, dueDate: Date? = nil, deadLine: Date? = nil, project: Project?, inbox: Bool, createdDate: Date = Date.now) {
+	init(id: UUID = UUID(), title: String, notes: String, status: Bool, dueDate: Date?, deadLineDate: Date?, inbox: Bool, project: [Project] = []) {
 		self.id = id
 		self.title = title
-		self.status = status
 		self.notes = notes
+		self.status = status
 		self.dueDate = dueDate
-		self.deadLine = deadLine
-		self.project = project
+		self.deadLineDate = deadLineDate
 		self.inbox = inbox
-		self.createdDate = createdDate
+		self.project = project
 	}
 }

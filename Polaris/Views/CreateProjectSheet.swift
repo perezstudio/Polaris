@@ -6,14 +6,18 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct CreateProjectSheet: View {
 	
+	@Environment(\.modelContext) private var context
 	@Environment(\.dismiss) var dismiss
 	@State var projectTitle: String = ""
 	@State var projectIcon: String = "square.stack.fill"
 	@State var projectColor: ColorPalette = .blue
 	@State var projectDescription: String = ""
+	@State var iconPickerSheet: Bool = false
+	@State var colorPickerSheet: Bool = false
 	@FocusState private var focusedField: FocusedField?
 	
     var body: some View {
@@ -30,7 +34,7 @@ struct CreateProjectSheet: View {
 					}
 					HStack {
 						Button {
-							print("Icon Button Test")
+							iconPickerSheet.toggle()
 						} label: {
 							Label("Project Icon", systemImage: projectIcon)
 								.labelStyle(.iconOnly)
@@ -38,7 +42,7 @@ struct CreateProjectSheet: View {
 						}
 						Spacer()
 						Button {
-							print("Color Button Test")
+							colorPickerSheet.toggle()
 						} label: {
 							Label("Project Color", systemImage: "circle.fill")
 								.labelStyle(.iconOnly)
@@ -50,29 +54,39 @@ struct CreateProjectSheet: View {
 			}
 			.navigationTitle("New Project")
 			.navigationBarTitleDisplayMode(.inline)
+			.sheet(isPresented: $iconPickerSheet) {
+				SymbolGridView(projectIcon: $projectIcon)
+			}
+			.sheet(isPresented: $colorPickerSheet) {
+				ColorPickerView(selectedColor: $projectColor)
+			}
 			.toolbar {
-				ToolbarItem(placement: .destructiveAction) {
+				ToolbarItem(placement: .cancellationAction) {
 					Button {
 						dismiss()
 					} label: {
-						Label("Close", systemImage: "xmark.circle.fill")
-							.foregroundStyle(projectColor.color)
+						Label("Cancel", systemImage: "xmark.circle.fill")
 					}
 				}
-				ToolbarItem(placement: .topBarLeading) {
+				ToolbarItem(placement: .confirmationAction) {
 					Button {
-						print("Create Project")
+						addProject()
 						dismiss()
 					} label: {
-						Label("Create", systemImage: "checkmark.circle.fill")
-							.foregroundStyle(projectColor.color)
+						Label("Create", systemImage: "rectangle.stack.fill.badge.plus")
 					}
 				}
 			}
 		}
     }
+	
+	private func addProject() {
+		let newProject = Project(title: projectTitle, status: .InProgress, favorite: false, icon: projectIcon, color: projectColor, todos: [])
+		context.insert(newProject)
+		dismiss()
+	}
 }
 
 #Preview {
-	CreateProjectSheet(projectTitle: "New Project", projectIcon: "stack.fill", projectColor: .blue, projectDescription: "This is my new project for the Polaris app")
+	CreateProjectSheet(projectTitle: "New Project", projectIcon: "stack.fill", projectColor: ColorPalette.blue, projectDescription: "This is my new project for the Polaris app")
 }

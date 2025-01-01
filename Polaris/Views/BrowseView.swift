@@ -21,6 +21,9 @@ struct BrowseView: View {
 					VStack(spacing: 16) {
 						HStack {
 							Text("Projects")
+								.font(.subheadline)
+								.textCase(.uppercase)
+								.foregroundStyle(Color.gray.opacity(0.80))
 							Spacer()
 							Button {
 								createProjectSheet.toggle()
@@ -35,31 +38,36 @@ struct BrowseView: View {
 						}
 						.padding(.horizontal, 32)
 						VStack {
-							if (projects.isEmpty) {
-								ContentUnavailableView {
-									Label {
-										Text("No Projects")
-									} icon: {
-										Image(systemName: "stack.square.fill")
-											.foregroundStyle(Color.blue)
+							VStack {
+								if (projects.isEmpty) {
+									ContentUnavailableView {
+										Label {
+											Text("No Projects")
+										} icon: {
+											Image(systemName: "stack.square.fill")
+												.foregroundStyle(Color.blue)
+										}
+									} description: {
+										Text("Way to go! You've completed all your tasks for today! Keep it up!")
+									} actions: {
+										Button {
+											createProjectSheet.toggle()
+										} label: {
+											Label("Create New Project", systemImage: "plus")
+										}
 									}
-								} description: {
-									Text("Way to go! You've completed all your tasks for today! Keep it up!")
-								} actions: {
-									Button {
-										createProjectSheet.toggle()
-									} label: {
-										Label("Create New Project", systemImage: "plus")
-									}
-								}
-							} else {
-								ForEach(projects, id: \Project.id) { project in
-									NavigationLink(destination: ProjectView(project: project)) {
-										MenuItem(icon: project.icon, title: project.title, color: project.color.color)
+								} else {
+									ForEach(projects, id: \Project.id) { project in
+										NavigationLink(destination: ProjectView(project: project)) {
+											MenuItem(icon: project.icon, title: project.title, color: project.color.color)
+										}
 									}
 								}
 							}
+							.background(Color(.secondarySystemGroupedBackground))
+							.cornerRadius(12)
 						}
+						.padding(.horizontal, 16)
 					}
 				}
 			}

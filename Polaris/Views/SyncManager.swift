@@ -39,64 +39,80 @@ class SyncManager: ObservableObject {
 	// MARK: - Sync Projects
 	func syncProjects() async {
 		guard isOnline else { return }
-		
+
 		do {
-			// Fetch local projects
-			let fetchDescriptor = FetchDescriptor<Project>()
-			let localProjects = try modelContext.fetch(fetchDescriptor)
-			
-			// Fetch remote projects from Supabase
+			// MARK: - Fetch Local Projects (Main Thread)
+			let localProjects: [Project] = try await MainActor.run {
+				let fetchDescriptor = FetchDescriptor<Project>()
+				return try modelContext.fetch(fetchDescriptor)
+			}
+
+			// MARK: - Fetch Remote Projects from Supabase
 			let response = try await supabase
-				.from("projects") // Updated to use .from directly
+				.from("projects")
 				.select()
 				.execute()
-			
-			// Decode the data
+
 			let remoteProjects = try JSONDecoder().decode([SupabaseProject].self, from: response.data)
-			
-			// Sync from Remote to Local
-			for remote in remoteProjects {
-				if let localProject = localProjects.first(where: { $0.id == remote.id }) {
-					// Update existing project if necessary
-					if remote.created > localProject.created {
-						updateLocalProject(localProject, from: remote)
+
+			// MARK: - Sync Remote to Local (Main Thread)
+			await MainActor.run {
+				for remote in remoteProjects {
+					if let localProject = localProjects.first(where: { $0.id == remote.id }) {
+						// Update existing project if necessary
+						if remote.created > localProject.created {
+							updateLocalProject(localProject, from: remote)
+						}
+					} else {
+						// Insert new remote project locally
+						let newProject = Project(
+							id: remote.id,
+							title: remote.title,
+							status: Status(rawValue: remote.status) ?? .InProgress,
+							favorite: remote.favorite,
+							icon: remote.icon,
+							color: ColorPalette(rawValue: remote.color) ?? .blue,
+							todos: []
+						)
+						modelContext.insert(newProject)
 					}
-				} else {
-					// Insert new remote project locally
-					let newProject = Project(
-						id: remote.id,
-						title: remote.title,
-						status: Status(rawValue: remote.status) ?? .InProgress,
-						favorite: remote.favorite,
-						icon: remote.icon,
-						color: ColorPalette(rawValue: remote.color) ?? .blue,
-						todos: []
-					)
-					modelContext.insert(newProject)
 				}
 			}
-			
-			// Sync from Local to Remote
+
+			// MARK: - Sync Local to Remote
 			for local in localProjects {
 				if !remoteProjects.contains(where: { $0.id == local.id }) {
+					let userID: String
+
+					do {
+						let session = try await supabase.auth.session
+						userID = session.user.id.uuidString
+					} catch {
+						print("Failed to fetch user ID: \(error.localizedDescription)")
+						continue
+					}
+
 					try await supabase
-						.from("projects") // Updated to use .from directly
+						.from("projects")
 						.insert([
-							"id": local.id.uuidString, // UUID -> String
+							"id": local.id.uuidString,
 							"title": local.title,
 							"status": local.status.rawValue,
-							"favorite": local.favorite ? "true" : "false", // Bool -> Bool (no string conversion needed)
+							"favorite": local.favorite ? "true" : "false",
 							"icon": local.icon,
 							"color": local.color.rawValue,
-							"created": ISO8601DateFormatter().string(from: local.created), // Date -> ISO String
-							"user_id": supabase.auth.session.user.id.uuidString ?? ""
+							"created": ISO8601DateFormatter().string(from: local.created),
+							"user_id": userID
 						])
 						.execute()
 				}
 			}
-			
-			// Save changes to the local database
-			try modelContext.save()
+
+			// Save Changes to Local Database
+			try await MainActor.run {
+				try modelContext.save()
+			}
+
 			print("Sync completed successfully.")
 		} catch {
 			print("Failed to sync: \(error.localizedDescription)")
@@ -123,4 +139,29 @@ struct SupabaseProject: Codable {
 	var icon: String
 	var color: String
 	var created: Date
+
+	enum CodingKeys: String, CodingKey {
+		case id
+		case title
+		case status
+		case favorite
+		case icon
+		case color
+		case created
+	}
+
+	init(from decoder: Decoder) throws {
+		let container = try decoder.container(keyedBy: CodingKeys.self)
+		id = UUID(uuidString: try container.decode(String.self, forKey: .id)) ?? UUID()
+		title = try container.decode(String.self, forKey: .title)
+		status = try container.decode(String.self, forKey: .status)
+		favorite = try container.decode(Bool.self, forKey: .favorite)
+		icon = try container.decode(String.self, forKey: .icon)
+		color = try container.decode(String.self, forKey: .color)
+
+		// Parse date manually
+		let dateString = try container.decode(String.self, forKey: .created)
+		let formatter = ISO8601DateFormatter()
+		created = formatter.date(from: dateString) ?? Date()
+	}
 }

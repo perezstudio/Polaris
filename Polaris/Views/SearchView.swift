@@ -71,7 +71,7 @@ struct SearchView: View {
 	
 	// MARK: - View Components
 	private var searchResultsView: some View {
-		ScrollView {
+		ScrollView(showsIndicators: false) {
 			VStack(alignment: .leading, spacing: 16) {
 				// Recent searches section
 				if !searchItems.isEmpty {

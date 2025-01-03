@@ -20,7 +20,7 @@ struct InboxView: View {
 	var body: some View {
 		NavigationView {
 			ZStack {
-				ScrollView {
+				ScrollView(showsIndicators: false) {
 					VStack {
 						if todos.isEmpty {
 							ContentUnavailableView {
@@ -115,5 +115,8 @@ struct InboxView: View {
 }
 
 #Preview {
-	ContentView()
+	let mockAuthManager = MockAuthManager()
+	let container = try! ModelContainer(for: Project.self)
+	let syncManager = SyncManager(context: container.mainContext)
+	ContentView(authManager: mockAuthManager, syncManager: syncManager)
 }

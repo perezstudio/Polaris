@@ -15,7 +15,7 @@ struct ColorPickerView: View {
 	
     var body: some View {
 		NavigationStack {
-			ScrollView {
+			ScrollView(showsIndicators: false) {
 				LazyVGrid(columns: columns, spacing: 20) {
 					ForEach(ColorPalette.allCases) { color in
 						Button {
@@ -42,7 +42,7 @@ struct ColorPickerView: View {
 					Button {
 						dismiss()
 					} label: {
-						Label("Cancel", systemImage: "xmark.fill")
+						Label("Cancel", systemImage: "xmark.circle.fill")
 					}
 				}
 			}

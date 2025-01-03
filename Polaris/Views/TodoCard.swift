@@ -62,6 +62,9 @@ struct TodoCard: View {
 					TodoDateView(showDetails: $showDetails, date: $todo.dueDate)
 				}
 				Text(todo.title)
+					.multilineTextAlignment(.leading)
+					.lineLimit(1)
+					.truncationMode(.tail)
 				Spacer()
 			}
 			.padding(.horizontal, 32)

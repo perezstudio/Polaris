@@ -41,4 +41,13 @@ class Todo {
 			return 0
 		}
 	}
+	
+	@Transient var dueDateYear: Int {
+		let calendar = Calendar.current
+		if dueDate != nil {
+			return calendar.component(.year, from: dueDate ?? Date.now)
+		} else {
+			return 0
+		}
+	}
 }

@@ -20,7 +20,7 @@ struct ProjectView: View {
 	
 	var body: some View {
 		ZStack {
-			ScrollView {
+			ScrollView(showsIndicators: false) {
 				VStack {
 					if todos.isEmpty {
 						ContentUnavailableView {

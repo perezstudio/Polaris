@@ -20,9 +20,11 @@ struct CreateProjectSheet: View {
 	@State var colorPickerSheet: Bool = false
 	@FocusState private var focusedField: FocusedField?
 	
+	var syncManager: SyncManager
+	
     var body: some View {
 		NavigationStack {
-			ScrollView {
+			ScrollView(showsIndicators: false) {
 				VStack(spacing: 24) {
 					VStack(spacing: 16) {
 						TextField("New Project", text: $projectTitle, axis: .vertical)
@@ -70,7 +72,7 @@ struct CreateProjectSheet: View {
 				}
 				ToolbarItem(placement: .confirmationAction) {
 					Button {
-						addProject()
+						addProject(syncManager: syncManager)
 						dismiss()
 					} label: {
 						Label("Create", systemImage: "rectangle.stack.fill.badge.plus")
@@ -80,13 +82,41 @@ struct CreateProjectSheet: View {
 		}
     }
 	
-	private func addProject() {
-		let newProject = Project(title: projectTitle, status: .InProgress, favorite: false, icon: projectIcon, color: projectColor, todos: [])
+	private func addProject(syncManager: SyncManager) {
+		// Create a new local project
+		let newProject = Project(
+			title: projectTitle,
+			status: .InProgress,
+			favorite: false,
+			icon: projectIcon,
+			color: projectColor,
+			todos: []
+		)
+		
+		// Insert the project into the local database
 		context.insert(newProject)
+		
+		// Sync the new project to Supabase in the background
+		Task {
+			await syncManager.syncProjects()
+		}
+		
+		// Close the view
 		dismiss()
 	}
 }
 
 #Preview {
-	CreateProjectSheet(projectTitle: "New Project", projectIcon: "stack.fill", projectColor: ColorPalette.blue, projectDescription: "This is my new project for the Polaris app")
+	// Create a mock ModelContainer with the Project schema
+	let container = try! ModelContainer(for: Project.self)
+	let syncManager = SyncManager(context: container.mainContext)
+	
+	return CreateProjectSheet(
+		projectTitle: "New Project",
+		projectIcon: "stack.fill",
+		projectColor: ColorPalette.blue,
+		projectDescription: "This is my new project for the Polaris app",
+		syncManager: syncManager
+	)
+	.modelContainer(container) // Inject the container into the view
 }

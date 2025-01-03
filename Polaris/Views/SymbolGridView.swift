@@ -37,7 +37,7 @@ struct SymbolGridView: View {
 					}
 					.padding(.vertical, 10)
 
-					ScrollView {
+					ScrollView(showsIndicators: false) {
 						LazyVStack(alignment: .leading, spacing: 20) {
 							ForEach(iconGroups) { group in
 								VStack(alignment: .leading) {
@@ -78,7 +78,7 @@ struct SymbolGridView: View {
 					Button {
 						dismiss()
 					} label: {
-						Label("Cancel", systemImage: "xmark.fill")
+						Label("Cancel", systemImage: "xmark.circle.fill")
 					}
 				}
 			}

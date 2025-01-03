@@ -11,6 +11,7 @@ import SwiftData
 struct ContentView: View {
 	
     @Environment(\.modelContext) private var modelContext
+	@ObservedObject var authManager: AuthManager
 	@Query(filter: #Predicate<Todo> { todo in
 		todo.dueDate != nil && todo.status == false
 	}, sort: \Todo.created) var todos: [Todo]
@@ -18,6 +19,8 @@ struct ContentView: View {
 		todo.inbox == true && todo.status == false
 		}, sort: \Todo.created, order: .forward) var inboxTodos: [Todo]
 	@State var selectedProject: Project? = nil
+	
+	var syncManager: SyncManager
 	
 	private var todayTodos: [Todo] {
 		todos.filter { todo in
@@ -56,7 +59,7 @@ struct ContentView: View {
 				SearchView()
 			}
 			Tab("Browse", systemImage: "square.stack.fill") {
-				BrowseView()
+				BrowseView(authManager: authManager, syncManager: syncManager)
 			}
 		}
 		.tabViewStyle(.sidebarAdaptable)
@@ -64,6 +67,9 @@ struct ContentView: View {
 }
 
 #Preview {
-    ContentView()
+	let mockAuthManager = MockAuthManager()
+	let container = try! ModelContainer(for: Project.self)
+	let syncManager = SyncManager(context: container.mainContext)
+	ContentView(authManager: mockAuthManager, syncManager: syncManager)
         .modelContainer(for: Project.self, inMemory: true)
 }

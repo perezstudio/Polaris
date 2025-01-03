@@ -10,19 +10,24 @@ import SwiftUI
 struct DayScrollView: View {
 	let calendar = Calendar.current
 	
-	// Binding for selected month (1 = January, 12 = December)
+	// Binding for selected year, month, and day
+	@Binding var selectedYear: Int
 	@Binding var selectedMonth: Int
-	
-	// Track the selected day as an integer (day of the month)
 	@Binding var selectedDay: Int
+	
+	// Get today's date components
+	private var today: (year: Int, month: Int, day: Int) {
+		let today = calendar.startOfDay(for: Date())
+		let year = calendar.component(.year, from: today)
+		let month = calendar.component(.month, from: today)
+		let day = calendar.component(.day, from: today)
+		return (year, month, day)
+	}
 	
 	// Generate weeks grouped by Sunday to Saturday
 	var weeks: [[Date]] {
-		let today = calendar.startOfDay(for: Date())
-		let currentYear = calendar.component(.year, from: today)
-		
-		// Start from the first day of the selected month
-		let startOfMonth = calendar.date(from: DateComponents(year: currentYear, month: selectedMonth))!
+		// Start from the first day of the selected month and year
+		let startOfMonth = calendar.date(from: DateComponents(year: selectedYear, month: selectedMonth))!
 		let range = calendar.range(of: .day, in: .month, for: startOfMonth)!
 		
 		// Generate dates for the selected month only
@@ -63,20 +68,32 @@ struct DayScrollView: View {
 						ForEach(week, id: \.self) { date in
 							let dayNumber = calendar.component(.day, from: date)
 							let dayOfWeek = calendar.shortWeekdaySymbols[calendar.component(.weekday, from: date) - 1]
+							let monthNumber = calendar.component(.month, from: date)
+							let yearNumber = calendar.component(.year, from: date)
 							
-							VStack {
+							// Check if the day is today
+							let isToday = today.year == yearNumber && today.month == monthNumber && today.day == dayNumber
+							
+							VStack(spacing: 8) {
 								Text(dayOfWeek) // Day of the week (e.g., Sun)
 									.font(.caption)
-									.foregroundColor(.gray)
+									.fontWeight(.bold)
+									.foregroundColor(Color.gray.opacity(0.6))
 								
+								// Day number with conditional background for today
 								Text("\(dayNumber)") // Day number
 									.font(.title2)
 									.bold()
+									.foregroundColor(isToday ? Color.white : Color.primary)
+									.frame(width: 38, height: 38)
+									.background(
+										Circle()
+											.fill(isToday ? Color.red : Color.clear) // Red for today
+									)
 							}
 							.padding()
-							.frame(width: 60, height: 80)
-							.background(dayNumber == selectedDay ? Color.blue : Color.gray.opacity(0.1))
-							.foregroundColor(dayNumber == selectedDay ? .white : .black)
+							.background(dayNumber == selectedDay ? Color.gray.opacity(0.3) : Color.clear) // Highlight selected day
+							.foregroundColor(dayNumber == selectedDay ? .white : .primary)
 							.cornerRadius(10)
 							.onTapGesture {
 								selectedDay = dayNumber
@@ -91,7 +108,8 @@ struct DayScrollView: View {
 }
 
 #Preview {
-	@Previewable @State var selectedMonth = 3
-	@Previewable @State var selectedDay = 20
-	return DayScrollView(selectedMonth: $selectedMonth, selectedDay: $selectedDay)
+	@Previewable @State var selectedYear = Calendar.current.component(.year, from: Date())
+	@Previewable @State var selectedMonth = Calendar.current.component(.month, from: Date())
+	@Previewable @State var selectedDay = Calendar.current.component(.day, from: Date())
+	return DayScrollView(selectedYear: $selectedYear, selectedMonth: $selectedMonth, selectedDay: $selectedDay)
 }

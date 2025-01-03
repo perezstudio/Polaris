@@ -10,12 +10,17 @@ import SwiftData
 
 struct BrowseView: View {
 	
+	@ObservedObject var authManager: AuthManager
 	@Query(sort: \Project.created, order: .forward) var projects: [Project]
 	@State var createProjectSheet: Bool = false
+	@State var accountSheet: Bool = false
+	@State var settingsSheet: Bool = false
+	
+	var syncManager: SyncManager
 	
 	var body: some View {
 		NavigationView {
-			ScrollView {
+			ScrollView(showsIndicators: false) {
 				VStack(spacing: 32) {
 					DefaultBrowseOptions()
 					VStack(spacing: 16) {
@@ -44,7 +49,7 @@ struct BrowseView: View {
 										Label {
 											Text("No Projects")
 										} icon: {
-											Image(systemName: "stack.square.fill")
+											Image(systemName: "square.stack.fill")
 												.foregroundStyle(Color.blue)
 										}
 									} description: {
@@ -74,14 +79,29 @@ struct BrowseView: View {
 			.background(Color(.systemGroupedBackground))
 			.navigationTitle("Browse")
 			.sheet(isPresented: $createProjectSheet) {
-				CreateProjectSheet()
+				CreateProjectSheet(syncManager: syncManager)
 					.presentationDetents([.medium, .large])
 					.presentationDragIndicator(.visible)
 			}
+			.sheet(isPresented: $accountSheet) {
+				AccountView(authManager: authManager)
+					.presentationDragIndicator(.visible)
+			}
+			.sheet(isPresented: $settingsSheet) {
+				SettingsView()
+					.presentationDragIndicator(.visible)
+			}
 			.toolbar {
-				ToolbarItem(placement: .navigationBarTrailing) {
+				ToolbarItem(placement: .topBarLeading) {
 					Button {
-						print("Test Settings Button")
+						accountSheet.toggle()
+					} label: {
+						Label("Account", systemImage: "person.crop.circle")
+					}
+				}
+				ToolbarItem(placement: .topBarTrailing) {
+					Button {
+						settingsSheet.toggle()
 					} label: {
 						Label("Settings", systemImage: "gear")
 					}
@@ -92,5 +112,8 @@ struct BrowseView: View {
 }
 
 #Preview {
-	BrowseView()
+	let mockAuthManager = MockAuthManager()
+	let container = try! ModelContainer(for: Project.self)
+	let syncManager = SyncManager(context: container.mainContext)
+	BrowseView(authManager: mockAuthManager, syncManager: syncManager)
 }

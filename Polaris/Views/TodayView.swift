@@ -48,7 +48,7 @@ struct TodayView: View {
 	// MARK: - View Components
 	
 	private var mainContent: some View {
-		ScrollView {
+		ScrollView(showsIndicators: false) {
 			VStack {
 				if todayTodos.isEmpty {
 					emptyStateView
@@ -148,5 +148,8 @@ struct TodayView: View {
 }
 
 #Preview {
-	ContentView()
+	let mockAuthManager = MockAuthManager()
+	let container = try! ModelContainer(for: Project.self)
+	let syncManager = SyncManager(context: container.mainContext)
+	ContentView(authManager: mockAuthManager, syncManager: syncManager)
 }

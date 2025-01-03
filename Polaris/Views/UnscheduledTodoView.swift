@@ -11,15 +11,32 @@ import SwiftData
 struct UnscheduledTodoView: View {
 	
 	@Environment(\.dismiss) var dismiss
-	@Query(sort: \Todo.created, order: .forward) var unscheduledTodos: [Todo]
 	
-    var body: some View {
+	@Query(filter: #Predicate<Todo> { $0.dueDate == nil }, sort: \Todo.created, order: .forward)
+	var unscheduledTodos: [Todo]
+	@State var activeTodo: Todo? = nil
+	@State private var newlyCreatedTodo: Todo? = nil
+	
+	var body: some View {
 		NavigationStack {
-			ScrollView {
+			ScrollView(showsIndicators: false) {
 				VStack {
 					if (!unscheduledTodos.isEmpty) {
 						ForEach(unscheduledTodos) { todo in
-							Text(todo.title)
+							TodoCard(
+								todo: todo,
+								showDetails: .constant(activeTodo == todo),
+								isNewTodo: todo == newlyCreatedTodo
+							)
+							.onTapGesture {
+								withAnimation {
+									if activeTodo == todo {
+										activeTodo = nil
+									} else {
+										activeTodo = todo
+									}
+								}
+							}
 						}
 					} else {
 						ContentUnavailableView {
@@ -35,6 +52,17 @@ struct UnscheduledTodoView: View {
 					}
 				}
 			}
+			.onTapGesture {
+				withAnimation {
+					activeTodo = nil
+				}
+			}
+			.onChange(of: activeTodo) { _, newValue in
+				if newValue == nil {
+					newlyCreatedTodo = nil
+				}
+			}
+			.background(Color(.systemGroupedBackground))
 			.navigationTitle("Unscheduled")
 			.navigationBarTitleDisplayMode(.inline)
 			.toolbar {
@@ -47,9 +75,9 @@ struct UnscheduledTodoView: View {
 				}
 			}
 		}
-    }
+	}
 }
 
 #Preview {
-    UnscheduledTodoView()
+	UnscheduledTodoView()
 }

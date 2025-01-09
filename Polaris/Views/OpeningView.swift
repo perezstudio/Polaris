@@ -9,10 +9,6 @@ import SwiftUI
 
 struct OpeningView: View {
 	
-	@ObservedObject var authManager: AuthManager
-	@State var loginSheet: Bool = false
-	@State var signupSheet: Bool = false
-	
     var body: some View {
 		NavigationStack {
 			VStack(alignment: .leading, spacing: 16) {
@@ -32,7 +28,7 @@ struct OpeningView: View {
 				Spacer()
 				VStack(spacing: 10) {
 					Button {
-						signupSheet.toggle()
+//						signupSheet.toggle()
 					} label: {
 						Label("Create Account", systemImage: "person.fill.badge.plus")
 							.labelStyle(.titleOnly)
@@ -42,7 +38,7 @@ struct OpeningView: View {
 					.frame(maxWidth: .infinity)
 					.buttonStyle(.borderedProminent)
 					Button {
-						loginSheet.toggle()
+//						loginSheet.toggle()
 					} label: {
 						Label("Login", systemImage: "person.fill.badge.plus")
 							.labelStyle(.titleOnly)
@@ -55,18 +51,11 @@ struct OpeningView: View {
 			.padding(.horizontal, 40)
 			.padding(.top, 100)
 			.padding(.bottom, 50)
-			.sheet(isPresented: $loginSheet) {
-				LoginView(authManager: authManager)
-			}
-			.sheet(isPresented: $signupSheet) {
-				SignUpView(authManager: authManager)
-			}
 		}
 		.background(Color(UIColor.systemGroupedBackground))
     }
 }
 
 #Preview {
-	let mockAuthManager = MockAuthManager() // Use mock manager for preview
-	return OpeningView(authManager: mockAuthManager)
+	OpeningView()
 }

@@ -20,8 +20,6 @@ struct CreateProjectSheet: View {
 	@State var colorPickerSheet: Bool = false
 	@FocusState private var focusedField: FocusedField?
 	
-	var syncManager: SyncManager
-	
     var body: some View {
 		NavigationStack {
 			ScrollView(showsIndicators: false) {
@@ -72,7 +70,7 @@ struct CreateProjectSheet: View {
 				}
 				ToolbarItem(placement: .confirmationAction) {
 					Button {
-						addProject(syncManager: syncManager)
+						addProject()
 						dismiss()
 					} label: {
 						Label("Create", systemImage: "rectangle.stack.fill.badge.plus")
@@ -82,7 +80,7 @@ struct CreateProjectSheet: View {
 		}
     }
 	
-	private func addProject(syncManager: SyncManager) {
+	private func addProject() {
 		// Create a new local project
 		let newProject = Project(
 			title: projectTitle,
@@ -96,11 +94,6 @@ struct CreateProjectSheet: View {
 		// Insert the project into the local database
 		context.insert(newProject)
 		
-		// Sync the new project to Supabase in the background
-		Task {
-			await syncManager.syncProjects()
-		}
-		
 		// Close the view
 		dismiss()
 	}
@@ -109,14 +102,12 @@ struct CreateProjectSheet: View {
 #Preview {
 	// Create a mock ModelContainer with the Project schema
 	let container = try! ModelContainer(for: Project.self)
-	let syncManager = SyncManager(context: container.mainContext)
 	
 	return CreateProjectSheet(
 		projectTitle: "New Project",
 		projectIcon: "stack.fill",
 		projectColor: ColorPalette.blue,
-		projectDescription: "This is my new project for the Polaris app",
-		syncManager: syncManager
+		projectDescription: "This is my new project for the Polaris app"
 	)
 	.modelContainer(container) // Inject the container into the view
 }

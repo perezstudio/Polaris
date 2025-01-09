@@ -115,8 +115,5 @@ struct InboxView: View {
 }
 
 #Preview {
-	let mockAuthManager = MockAuthManager()
-	let container = try! ModelContainer(for: Project.self)
-	let syncManager = SyncManager(context: container.mainContext)
-	ContentView(authManager: mockAuthManager, syncManager: syncManager)
+	ContentView()
 }

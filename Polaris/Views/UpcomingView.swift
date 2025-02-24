@@ -39,7 +39,7 @@ struct UpcomingView: View {
 			
 			return formatter.string(from: date)
 		}
-		return "Select a Date."
+		return "Select a Date"
 	}
 	
 	// Filtered todos based on selected date

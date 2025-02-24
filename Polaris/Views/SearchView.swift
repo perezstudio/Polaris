@@ -9,54 +9,120 @@ import SwiftUI
 import SwiftData
 
 struct SearchView: View {
-	// MARK: - Properties
 	@Environment(\.modelContext) private var modelContext
 	@Query(sort: \Todo.created, order: .forward) var allTodos: [Todo]
 	@Query(sort: \SearchItem.created, order: .reverse) var searchItems: [SearchItem]
-	
+
 	@State private var searchText = ""
+	@State private var activeSearchText = ""  // Add this to track the actual search term
 	@State private var activeTodo: Todo? = nil
 	@State private var newlyCreatedTodo: Todo? = nil
-	
-	// MARK: - Computed Properties
+
 	var filteredTodos: [Todo] {
-		guard !searchText.isEmpty else { return [] }
+		guard !activeSearchText.isEmpty else { return [] }
 		return allTodos.filter { todo in
-			todo.title.localizedCaseInsensitiveContains(searchText) ||
-			todo.notes.localizedCaseInsensitiveContains(searchText)
+			todo.title.localizedCaseInsensitiveContains(activeSearchText) ||
+			todo.notes.localizedCaseInsensitiveContains(activeSearchText)
+		}
+	}
+
+	var showingSearchResults: Bool {
+		!activeSearchText.isEmpty
+	}
+
+	private func saveSearchItem() {
+		guard !activeSearchText.isEmpty else { return }
+		let searchItem = SearchItem(text: activeSearchText)
+		modelContext.insert(searchItem)
+
+		do {
+			try modelContext.save()
+		} catch {
+			print("Error saving search item: \(error.localizedDescription)")
 		}
 	}
 	
-	var showingSearchResults: Bool {
-		!searchText.isEmpty
+	private func clearSearch() {
+		searchText = ""
+		activeSearchText = ""
 	}
 	
-	// MARK: - Body
+	private func deleteSearchItem(_ item: SearchItem) {
+		modelContext.delete(item)
+		try? modelContext.save()
+	}
+
 	var body: some View {
 		NavigationStack {
-			ZStack {
-				// Content
-				if showingSearchResults {
-					searchResultsView
-				} else {
-					recentSearchesView
-				}
-				
-				// Clear background to handle taps
-				Color.clear
-					.contentShape(Rectangle())
-					.onTapGesture {
-						withAnimation {
-							activeTodo = nil
+			ScrollView(showsIndicators: false) {
+				// Rest of your view code remains the same
+				VStack(spacing: 16) {
+					if showingSearchResults {
+						ForEach(filteredTodos) { todo in
+							TodoCard(
+								todo: todo,
+								showDetails: .constant(activeTodo == todo),
+								isNewTodo: todo == newlyCreatedTodo
+							)
+							.onTapGesture {
+								withAnimation {
+									if activeTodo == todo {
+										activeTodo = nil
+									} else {
+										activeTodo = todo
+									}
+								}
+							}
+						}
+
+						if filteredTodos.isEmpty {
+							ContentUnavailableView.search
+						}
+					} else {
+						if !searchItems.isEmpty {
+							VStack {
+								VStack(alignment: .leading, spacing: 12) {
+									ForEach(searchItems) { item in
+										HStack {
+											MenuItem(icon: "clock", title: item.text, color: Color.blue)
+										}
+										.contentShape(Rectangle())
+										.onTapGesture {
+											searchText = item.text
+											activeSearchText = item.text
+										}
+										.swipeActions(edge: .trailing, allowsFullSwipe: true) {
+											Button(role: .destructive) {
+												withAnimation {
+													deleteSearchItem(item)
+												}
+											} label: {
+												Label("Delete", systemImage: "trash")
+											}
+										}
+									}
+								}
+								.background(Color(.secondarySystemGroupedBackground))
+								.cornerRadius(12)
+							}
+							.padding(.horizontal, 16)
+							.frame(maxWidth: .infinity, alignment: .leading)
+						} else {
+							ContentUnavailableView {
+								Label {
+									Text("No Recent Searches")
+								} icon: {
+									Image(systemName: "magnifyingglass")
+										.foregroundStyle(Color.blue)
+								}
+							}
 						}
 					}
+				}
 			}
-			.searchable(text: $searchText, prompt: "Search todos...")
-			.onChange(of: searchText) { _, newValue in
-				if newValue.isEmpty {
-					withAnimation {
-						activeTodo = nil
-					}
+			.onTapGesture {
+				withAnimation {
+					activeTodo = nil
 				}
 			}
 			.onChange(of: activeTodo) { _, newValue in
@@ -66,119 +132,26 @@ struct SearchView: View {
 			}
 			.navigationTitle("Search")
 			.navigationBarTitleDisplayMode(.large)
-		}
-	}
-	
-	// MARK: - View Components
-	private var searchResultsView: some View {
-		ScrollView(showsIndicators: false) {
-			VStack(alignment: .leading, spacing: 16) {
-				// Recent searches section
-				if !searchItems.isEmpty {
-					VStack {
-						ForEach(searchItems) { item in
-							Button(action: {
-								searchText = item.text
-							}) {
-								HStack {
-									Image(systemName: "clock.arrow.circlepath")
-									Text(item.text)
-									Spacer()
-								}
-								.foregroundColor(.primary)
-								.padding(.vertical, 4)
-							}
-						}
+			.searchable(
+				text: $searchText,
+				prompt: "Search todos...",
+				suggestions: {
+					ForEach(searchItems.prefix(5)) { item in
+						Text(item.text)
+							.searchCompletion(item.text)
 					}
 				}
-				
-				// Search results section
-				if filteredTodos.isEmpty {
-					ContentUnavailableView.search(text: searchText)
-				} else {
-					ForEach(filteredTodos) { todo in
-						TodoCard(
-							todo: todo,
-							showDetails: .constant(activeTodo == todo),
-							isNewTodo: todo == newlyCreatedTodo
-						)
-						.onTapGesture {
-							toggleActive(todo)
-						}
-					}
-					.onChange(of: activeTodo) { oldValue, newValue in
-						// Save search when a todo is selected
-						if newValue != nil && oldValue == nil {
-							saveSearch()
-						}
-					}
+			)
+			.onChange(of: searchText) { _, newValue in
+				if newValue.isEmpty {
+					activeSearchText = "" // Clear active search when text is cleared
 				}
 			}
-			.padding()
-		}
-	}
-	
-	private var recentSearchesView: some View {
-		List {
-			if searchItems.isEmpty {
-				ContentUnavailableView {
-					Label {
-						Text("No Recent Searches")
-					} icon: {
-						Image(systemName: "magnifyingglass")
-							.foregroundStyle(Color.gray)
-					}
-				} description: {
-					Text("Your recent searches will appear here")
-				}
-			} else {
-				SwiftUI.Section {
-					ForEach(searchItems) { item in
-						Button(action: {
-							searchText = item.text
-						}) {
-							HStack {
-								Image(systemName: "clock.arrow.circlepath")
-								Text(item.text)
-								Spacer()
-							}
-						}
-						.foregroundColor(.primary)
-					}
-				} header: {
-					Text("Recent Searches")
-				}
+			.onSubmit(of: .search) {
+				activeSearchText = searchText
+				saveSearchItem()
 			}
-		}
-	}
-	
-	// MARK: - Helper Functions
-	private func toggleActive(_ todo: Todo) {
-		withAnimation {
-			if activeTodo == todo {
-				activeTodo = nil
-			} else {
-				activeTodo = todo
-			}
-		}
-	}
-	
-	private func saveSearch() {
-		guard !searchText.isEmpty else { return }
-		// Check if search already exists and avoid duplicates
-		if !searchItems.contains(where: { $0.text == searchText }) {
-			withAnimation {
-				let searchItem = SearchItem(text: searchText)
-				modelContext.insert(searchItem)
-				try? modelContext.save() // Save immediately
-				
-				// Handle cleanup in a separate operation after successful save
-				if searchItems.count >= 10,
-				   let oldestSearch = searchItems.last {
-					modelContext.delete(oldestSearch)
-					try? modelContext.save()
-				}
-			}
+			.background(Color(UIColor.systemGroupedBackground))
 		}
 	}
 }

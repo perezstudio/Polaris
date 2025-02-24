@@ -9,7 +9,6 @@ import SwiftUI
 import SwiftData
 
 struct CreateProjectSheet: View {
-	
 	@Environment(\.modelContext) private var context
 	@Environment(\.dismiss) var dismiss
 	@State var projectTitle: String = ""
@@ -20,9 +19,24 @@ struct CreateProjectSheet: View {
 	@State var colorPickerSheet: Bool = false
 	@FocusState private var focusedField: FocusedField?
 	
-	var syncManager: SyncManager
+	// Add optional project parameter for editing
+	var projectToEdit: Project?
 	
-    var body: some View {
+	init(projectToEdit: Project? = nil) {
+		self.projectToEdit = projectToEdit
+		// Initialize state properties with existing project values if editing
+		if let project = projectToEdit {
+			_projectTitle = State(initialValue: project.title)
+			_projectIcon = State(initialValue: project.icon)
+			_projectColor = State(initialValue: project.color)
+		}
+	}
+	
+	private var isEditing: Bool {
+		projectToEdit != nil
+	}
+	
+	var body: some View {
 		NavigationStack {
 			ScrollView(showsIndicators: false) {
 				VStack(spacing: 24) {
@@ -54,7 +68,7 @@ struct CreateProjectSheet: View {
 				}
 				.padding()
 			}
-			.navigationTitle("New Project")
+			.navigationTitle(isEditing ? "Edit Project" : "New Project")
 			.navigationBarTitleDisplayMode(.inline)
 			.sheet(isPresented: $iconPickerSheet) {
 				SymbolGridView(projectIcon: $projectIcon)
@@ -72,18 +86,23 @@ struct CreateProjectSheet: View {
 				}
 				ToolbarItem(placement: .confirmationAction) {
 					Button {
-						addProject(syncManager: syncManager)
+						if isEditing {
+							updateProject()
+						} else {
+							addProject()
+						}
 						dismiss()
 					} label: {
-						Label("Create", systemImage: "rectangle.stack.fill.badge.plus")
+						Label(isEditing ? "Save" : "Create",
+							  systemImage: isEditing ? "checkmark.circle.fill" : "rectangle.stack.fill.badge.plus")
 					}
+					.disabled(projectTitle.isEmpty)
 				}
 			}
 		}
-    }
+	}
 	
-	private func addProject(syncManager: SyncManager) {
-		// Create a new local project
+	private func addProject() {
 		let newProject = Project(
 			title: projectTitle,
 			status: .InProgress,
@@ -93,30 +112,37 @@ struct CreateProjectSheet: View {
 			todos: []
 		)
 		
-		// Insert the project into the local database
 		context.insert(newProject)
+		try? context.save()
+	}
+	
+	private func updateProject() {
+		guard let project = projectToEdit else { return }
 		
-		// Sync the new project to Supabase in the background
-		Task {
-			await syncManager.syncProjects()
-		}
+		project.title = projectTitle
+		project.icon = projectIcon
+		project.color = projectColor
 		
-		// Close the view
-		dismiss()
+		try? context.save()
 	}
 }
 
 #Preview {
-	// Create a mock ModelContainer with the Project schema
 	let container = try! ModelContainer(for: Project.self)
-	let syncManager = SyncManager(context: container.mainContext)
 	
-	return CreateProjectSheet(
-		projectTitle: "New Project",
-		projectIcon: "stack.fill",
-		projectColor: ColorPalette.blue,
-		projectDescription: "This is my new project for the Polaris app",
-		syncManager: syncManager
+	return CreateProjectSheet()
+		.modelContainer(container)
+}
+
+// Add another preview for editing mode
+#Preview {
+	let container = try! ModelContainer(for: Project.self)
+	let previewProject = Project(
+		title: "Preview Project",
+		icon: "star",
+		color: .red
 	)
-	.modelContainer(container) // Inject the container into the view
+	
+	CreateProjectSheet(projectToEdit: previewProject)
+		.modelContainer(container)
 }

@@ -12,6 +12,7 @@ enum Status: String, CaseIterable, Codable {
 	case InProgress = "In Progress"
 	case Completed = "Completed"
 	case Cancelled = "Cancelled"
+	case Archived = "Archived"
 }
 
 enum ColorPalette: String, CaseIterable, Codable, Identifiable {

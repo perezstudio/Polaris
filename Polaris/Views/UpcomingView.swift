@@ -16,9 +16,9 @@ struct UpcomingView: View {
 	@Query(sort: \Todo.created, order: .forward) private var allTodos: [Todo]
 	
 	// States for date selection
-	@State private var selectedMonth: Int = Calendar.current.component(.month, from: Date())
-	@State private var selectedDay: Int = Calendar.current.component(.day, from: Date())
-	@State private var selectedYear: Int = Calendar.current.component(.year, from: Date())
+	@State private var selectedMonth: Int = Calendar.current.component(.month, from: Calendar.current.date(byAdding: .day, value: 1, to: Date())!)
+	@State private var selectedDay: Int = Calendar.current.component(.day, from: Calendar.current.date(byAdding: .day, value: 1, to: Date())!)
+	@State private var selectedYear: Int = Calendar.current.component(.year, from: Calendar.current.date(byAdding: .day, value: 1, to: Date())!)
 	@State private var displayDateSelector: Bool = false
 	@State var overdueTodosSheet: Bool = false
 	@State var unscheduledTodosSheet: Bool = false

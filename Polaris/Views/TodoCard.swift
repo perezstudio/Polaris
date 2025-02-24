@@ -65,7 +65,6 @@ struct TodoCard: View {
 					.multilineTextAlignment(.leading)
 					.lineLimit(1)
 					.truncationMode(.tail)
-				Spacer()
 			}
 			.padding(.horizontal, 32)
 			.padding(.vertical, 16)

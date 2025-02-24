@@ -46,7 +46,6 @@
 			isa = PBXGroup;
 			children = (
 				11A48E312CC2DA800026A2F4 /* Polaris */,
-				11B901B12D275976006910E2 /* Frameworks */,
 				11A48E302CC2DA800026A2F4 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -57,13 +56,6 @@
 				11A48E2F2CC2DA800026A2F4 /* Polaris.app */,
 			);
 			name = Products;
-			sourceTree = "<group>";
-		};
-		11B901B12D275976006910E2 /* Frameworks */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */

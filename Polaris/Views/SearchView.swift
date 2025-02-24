@@ -46,6 +46,11 @@ struct SearchView: View {
 		searchText = ""
 		activeSearchText = ""
 	}
+	
+	private func deleteSearchItem(_ item: SearchItem) {
+		modelContext.delete(item)
+		try? modelContext.save()
+	}
 
 	var body: some View {
 		NavigationStack {
@@ -78,11 +83,22 @@ struct SearchView: View {
 							VStack {
 								VStack(alignment: .leading, spacing: 12) {
 									ForEach(searchItems) { item in
-										Button(action: {
+										HStack {
+											MenuItem(icon: "clock", title: item.text, color: Color.blue)
+										}
+										.contentShape(Rectangle())
+										.onTapGesture {
 											searchText = item.text
 											activeSearchText = item.text
-										}) {
-											MenuItem(icon: "clock", title: item.text, color: Color.blue)
+										}
+										.swipeActions(edge: .trailing, allowsFullSwipe: true) {
+											Button(role: .destructive) {
+												withAnimation {
+													deleteSearchItem(item)
+												}
+											} label: {
+												Label("Delete", systemImage: "trash")
+											}
 										}
 									}
 								}

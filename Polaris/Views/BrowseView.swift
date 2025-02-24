@@ -10,13 +10,9 @@ import SwiftData
 
 struct BrowseView: View {
 	
-	@ObservedObject var authManager: AuthManager
 	@Query(sort: \Project.created, order: .forward) var projects: [Project]
 	@State var createProjectSheet: Bool = false
-	@State var accountSheet: Bool = false
 	@State var settingsSheet: Bool = false
-	
-	var syncManager: SyncManager
 	
 	var body: some View {
 		NavigationView {
@@ -79,12 +75,8 @@ struct BrowseView: View {
 			.background(Color(.systemGroupedBackground))
 			.navigationTitle("Browse")
 			.sheet(isPresented: $createProjectSheet) {
-				CreateProjectSheet(syncManager: syncManager)
+				CreateProjectSheet()
 					.presentationDetents([.medium, .large])
-					.presentationDragIndicator(.visible)
-			}
-			.sheet(isPresented: $accountSheet) {
-				AccountView(authManager: authManager)
 					.presentationDragIndicator(.visible)
 			}
 			.sheet(isPresented: $settingsSheet) {
@@ -92,13 +84,6 @@ struct BrowseView: View {
 					.presentationDragIndicator(.visible)
 			}
 			.toolbar {
-				ToolbarItem(placement: .topBarLeading) {
-					Button {
-						accountSheet.toggle()
-					} label: {
-						Label("Account", systemImage: "person.crop.circle")
-					}
-				}
 				ToolbarItem(placement: .topBarTrailing) {
 					Button {
 						settingsSheet.toggle()
@@ -112,8 +97,5 @@ struct BrowseView: View {
 }
 
 #Preview {
-	let mockAuthManager = MockAuthManager()
-	let container = try! ModelContainer(for: Project.self)
-	let syncManager = SyncManager(context: container.mainContext)
-	BrowseView(authManager: mockAuthManager, syncManager: syncManager)
+	BrowseView()
 }

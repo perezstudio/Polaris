@@ -6,11 +6,6 @@
 	objectVersion = 77;
 	objects = {
 
-/* Begin PBXBuildFile section */
-		11B901B02D275777006910E2 /* Auth in Frameworks */ = {isa = PBXBuildFile; productRef = 11B901AF2D275777006910E2 /* Auth */; };
-		11B901B32D275976006910E2 /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = 11B901B22D275976006910E2 /* Supabase */; };
-/* End PBXBuildFile section */
-
 /* Begin PBXFileReference section */
 		11A48E2F2CC2DA800026A2F4 /* Polaris.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Polaris.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -41,8 +36,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				11B901B32D275976006910E2 /* Supabase in Frameworks */,
-				11B901B02D275777006910E2 /* Auth in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -53,7 +46,6 @@
 			isa = PBXGroup;
 			children = (
 				11A48E312CC2DA800026A2F4 /* Polaris */,
-				11B901B12D275976006910E2 /* Frameworks */,
 				11A48E302CC2DA800026A2F4 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -64,13 +56,6 @@
 				11A48E2F2CC2DA800026A2F4 /* Polaris.app */,
 			);
 			name = Products;
-			sourceTree = "<group>";
-		};
-		11B901B12D275976006910E2 /* Frameworks */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -93,8 +78,6 @@
 			);
 			name = Polaris;
 			packageProductDependencies = (
-				11B901AF2D275777006910E2 /* Auth */,
-				11B901B22D275976006910E2 /* Supabase */,
 			);
 			productName = Polaris;
 			productReference = 11A48E2F2CC2DA800026A2F4 /* Polaris.app */;
@@ -125,7 +108,6 @@
 			mainGroup = 11A48E262CC2DA800026A2F4;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				11B901AE2D275777006910E2 /* XCRemoteSwiftPackageReference "supabase-swift" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 11A48E302CC2DA800026A2F4 /* Products */;
@@ -386,30 +368,6 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
-
-/* Begin XCRemoteSwiftPackageReference section */
-		11B901AE2D275777006910E2 /* XCRemoteSwiftPackageReference "supabase-swift" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/supabase/supabase-swift.git";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 2.5.1;
-			};
-		};
-/* End XCRemoteSwiftPackageReference section */
-
-/* Begin XCSwiftPackageProductDependency section */
-		11B901AF2D275777006910E2 /* Auth */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 11B901AE2D275777006910E2 /* XCRemoteSwiftPackageReference "supabase-swift" */;
-			productName = Auth;
-		};
-		11B901B22D275976006910E2 /* Supabase */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 11B901AE2D275777006910E2 /* XCRemoteSwiftPackageReference "supabase-swift" */;
-			productName = Supabase;
-		};
-/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 11A48E272CC2DA800026A2F4 /* Project object */;
 }

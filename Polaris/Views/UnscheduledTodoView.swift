@@ -62,8 +62,9 @@ struct UnscheduledTodoView: View {
 					newlyCreatedTodo = nil
 				}
 			}
-			.background(Color(.systemGroupedBackground))
 			.navigationTitle("Unscheduled")
+			#if os(iOS)
+			.background(Color(.systemGroupedBackground))
 			.navigationBarTitleDisplayMode(.inline)
 			.toolbar {
 				ToolbarItem(placement: .navigationBarLeading) {
@@ -74,6 +75,7 @@ struct UnscheduledTodoView: View {
 					}
 				}
 			}
+			#endif
 		}
 	}
 }

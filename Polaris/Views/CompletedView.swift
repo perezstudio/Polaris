@@ -75,7 +75,8 @@ struct CompletedView: View {
 											}
 										}
 									}
-								}							}
+								}
+							}
 						}
 					}
 				}
@@ -115,9 +116,11 @@ struct CompletedView: View {
 				}
 			}
 		}
-		.background(Color(.systemGroupedBackground))
 		.navigationTitle("Completed")
+		#if os(iOS)
+		.background(Color(.systemGroupedBackground))
 		.navigationBarTitleDisplayMode(.large)
+		#endif
 	}
 	
 	// Function to format the date into a readable string

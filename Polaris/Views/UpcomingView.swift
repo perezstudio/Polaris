@@ -185,11 +185,14 @@ struct UpcomingView: View {
 						DayScrollView(selectedYear: $selectedYear, selectedMonth: $selectedMonth, selectedDay: $selectedDay)
 					}
 					.padding(.vertical, 8)
-					.background(Color(UIColor.secondarySystemGroupedBackground))
+					#if os(iOS)
+					.background(Color(.secondarySystemGroupedBackground))
+					#endif
 				}
 			}
-			.background(Color(UIColor.systemGroupedBackground))
 			.navigationTitle(formattedTitle)
+			#if os(iOS)
+			.background(Color(.systemGroupedBackground))
 			.navigationBarTitleDisplayMode(.large)
 			.toolbar {
 				ToolbarItem(placement: .topBarLeading) {
@@ -218,6 +221,7 @@ struct UpcomingView: View {
 					}
 				}
 			}
+			#endif
 			.sheet(isPresented: $unscheduledTodosSheet) {
 				UnscheduledTodoView()
 			}

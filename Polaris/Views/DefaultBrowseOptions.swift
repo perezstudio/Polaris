@@ -15,7 +15,9 @@ struct DefaultBrowseOptions: View {
 					MenuItem(icon: "checkmark.circle.fill", title: "Completed", color: Color.green)
 				}
 			}
+			#if os(iOS)
 			.background(Color(.secondarySystemGroupedBackground))
+			#endif
 			.cornerRadius(12)
 		}
 		.padding(.horizontal, 16)

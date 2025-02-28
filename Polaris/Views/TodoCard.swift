@@ -10,10 +10,12 @@ import SwiftData
 
 struct TodoCard: View {
 	
+	@Environment(\.modelContext) private var modelContext
 	@Bindable var todo: Todo
 	@Binding var showDetails: Bool
 	@FocusState private var focusedField: FocusedField?
 	var isNewTodo: Bool
+	@State private var showRecurrenceSheet = false
 	
 	var body: some View {
 		if showDetails == true {
@@ -21,6 +23,15 @@ struct TodoCard: View {
 			VStack(alignment: .leading, spacing: 20) {
 				HStack {
 					CheckMarkView(todoStatus: $todo.status)
+						.onChange(of: todo.status) { _, isCompleted in
+								if isCompleted && todo.isRecurring {
+									// When a recurring todo is completed, generate the next instance
+									DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+										_ = todo.generateNextOccurrence(modelContext: modelContext)
+										try? modelContext.save()
+									}
+								}
+							}
 					TextField("New To Do", text: $todo.title, axis: .vertical)
 						.focused($focusedField, equals: .title)
 				}
@@ -33,6 +44,19 @@ struct TodoCard: View {
 				.clipped()
 				HStack {
 					TodoDateView(showDetails: $showDetails, date: $todo.dueDate)
+					Spacer()
+										
+					// Recurrence button
+					Button {
+						showRecurrenceSheet = true
+					} label: {
+						Label {
+							Text(todo.isRecurring ? todo.recurrencePatternEnum.rawValue : "")
+						} icon: {
+							Image(systemName: todo.isRecurring ? "repeat" : "repeat.circle")
+						}
+						.foregroundColor(todo.isRecurring ? .blue : .gray)
+					}
 				}
 			}
 			.padding(.horizontal, 16)
@@ -53,6 +77,9 @@ struct TodoCard: View {
 				if isNewTodo {
 					focusedField = .title
 				}
+			}
+			.sheet(isPresented: $showRecurrenceSheet) {
+				RecurrenceSelectorView(todo: todo)
 			}
 		} else {
 			// Closed Task

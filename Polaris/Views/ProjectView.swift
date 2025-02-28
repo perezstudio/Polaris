@@ -193,8 +193,9 @@ struct ProjectView: View {
 				}
 			}
 		}
-		.background(Color(.systemGroupedBackground))
 		.navigationTitle(project.title)
+		#if os(iOS)
+		.background(Color(.systemGroupedBackground))
 		.navigationBarTitleDisplayMode(.large)
 		.toolbar {
 			ToolbarItem(placement: .topBarTrailing) {
@@ -244,6 +245,7 @@ struct ProjectView: View {
 				}
 			}
 		}
+		#endif
 		.sheet(isPresented: $editProjectSheet) {
 			CreateProjectSheet(projectToEdit: project)
 		}

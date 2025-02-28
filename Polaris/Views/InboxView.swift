@@ -93,7 +93,9 @@ struct InboxView: View {
 					}
 				}
 			}
+			#if os(iOS)
 			.background(Color(.systemGroupedBackground))
+			#endif
 			.navigationTitle("Inbox")
 		}
 	}

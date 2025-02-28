@@ -17,6 +17,8 @@ extension Date {
 struct TodayView: View {
 	
 	@Environment(\.modelContext) private var modelContext
+	@Environment(\.todoInspector) private var todoInspector
+
 	// Updated Query with basic date comparison
 	@Query(filter: #Predicate<Todo> { todo in
 		todo.dueDate != nil && todo.status == false
@@ -40,7 +42,9 @@ struct TodayView: View {
 					floatingActionButton
 				}
 			}
+			#if os(iOS)
 			.background(Color(.systemGroupedBackground))
+			#endif
 			.navigationTitle("Today")
 		}
 	}
@@ -93,12 +97,8 @@ struct TodayView: View {
 			)
 			.onTapGesture {
 				withAnimation {
-					if activeTodo == todo {
-						activeTodo = nil
-						newlyCreatedTodo = nil
-					} else {
-						activeTodo = todo
-					}
+					todoInspector.todo = todo
+					todoInspector.showTodoInspector = true
 				}
 			}
 		}

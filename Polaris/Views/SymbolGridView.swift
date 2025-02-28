@@ -72,7 +72,9 @@ struct SymbolGridView: View {
 				}
 			}
 			.navigationTitle("Project Icon")
+			#if os(iOS)
 			.navigationBarTitleDisplayMode(.inline)
+			#endif
 			.toolbar {
 				ToolbarItem(placement: .cancellationAction) {
 					Button {

@@ -69,7 +69,9 @@ struct CreateProjectSheet: View {
 				.padding()
 			}
 			.navigationTitle(isEditing ? "Edit Project" : "New Project")
+			#if os(iOS)
 			.navigationBarTitleDisplayMode(.inline)
+			#endif
 			.sheet(isPresented: $iconPickerSheet) {
 				SymbolGridView(projectIcon: $projectIcon)
 			}

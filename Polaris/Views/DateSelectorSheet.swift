@@ -35,6 +35,7 @@ struct DateSelectorSheet: View {
 				}
 			}
 			.navigationTitle("Select Due Date")
+			#if os(iOS)
 			.navigationBarTitleDisplayMode(.inline)
 			.toolbar {
 				ToolbarItem(placement: .navigationBarTrailing) {
@@ -58,6 +59,7 @@ struct DateSelectorSheet: View {
 					}
 				}
 			}
+			#endif
 		}
 	}
 }

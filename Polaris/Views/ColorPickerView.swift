@@ -36,6 +36,7 @@ struct ColorPickerView: View {
 				.padding() // Add padding around the grid
 			}
 			.navigationTitle("Select A Color")
+			#if os(iOS)
 			.navigationBarTitleDisplayMode(.inline)
 			.toolbar {
 				ToolbarItem(placement: .cancellationAction) {
@@ -46,6 +47,7 @@ struct ColorPickerView: View {
 					}
 				}
 			}
+			#endif
 		}
     }
 }

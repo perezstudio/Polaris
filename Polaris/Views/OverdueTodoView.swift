@@ -79,8 +79,9 @@ struct OverdueTodoView: View {
 					newlyCreatedTodo = nil
 				}
 			}
-			.background(Color(.systemGroupedBackground))
 			.navigationTitle("Overdue")
+			#if os(iOS)
+			.background(Color(.systemGroupedBackground))
 			.navigationBarTitleDisplayMode(.inline)
 			.toolbar {
 				ToolbarItem(placement: .navigationBarLeading) {
@@ -91,6 +92,7 @@ struct OverdueTodoView: View {
 					}
 				}
 			}
+			#endif
 		}
 	}
 }

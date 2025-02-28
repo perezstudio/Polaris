@@ -102,7 +102,9 @@ struct SearchView: View {
 										}
 									}
 								}
+								#if os(iOS)
 								.background(Color(.secondarySystemGroupedBackground))
+								#endif
 								.cornerRadius(12)
 							}
 							.padding(.horizontal, 16)
@@ -131,7 +133,6 @@ struct SearchView: View {
 				}
 			}
 			.navigationTitle("Search")
-			.navigationBarTitleDisplayMode(.large)
 			.searchable(
 				text: $searchText,
 				prompt: "Search todos...",
@@ -151,7 +152,10 @@ struct SearchView: View {
 				activeSearchText = searchText
 				saveSearchItem()
 			}
-			.background(Color(UIColor.systemGroupedBackground))
+			#if os(iOS)
+			.navigationBarTitleDisplayMode(.large)
+			.background(Color(.systemGroupedBackground))
+			#endif
 		}
 	}
 }

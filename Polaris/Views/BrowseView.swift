@@ -65,24 +65,18 @@ struct BrowseView: View {
 									}
 								}
 							}
+							#if os(iOS)
 							.background(Color(.secondarySystemGroupedBackground))
+							#endif
 							.cornerRadius(12)
 						}
 						.padding(.horizontal, 16)
 					}
 				}
 			}
-			.background(Color(.systemGroupedBackground))
 			.navigationTitle("Browse")
-			.sheet(isPresented: $createProjectSheet) {
-				CreateProjectSheet()
-					.presentationDetents([.medium, .large])
-					.presentationDragIndicator(.visible)
-			}
-			.sheet(isPresented: $settingsSheet) {
-				SettingsView()
-					.presentationDragIndicator(.visible)
-			}
+			#if os(iOS)
+			.background(Color(.systemGroupedBackground))
 			.toolbar {
 				ToolbarItem(placement: .topBarTrailing) {
 					Button {
@@ -91,6 +85,16 @@ struct BrowseView: View {
 						Label("Settings", systemImage: "gear")
 					}
 				}
+			}
+			#endif
+			.sheet(isPresented: $createProjectSheet) {
+				CreateProjectSheet()
+					.presentationDetents([.medium, .large])
+					.presentationDragIndicator(.visible)
+			}
+			.sheet(isPresented: $settingsSheet) {
+				SettingsView()
+					.presentationDragIndicator(.visible)
 			}
 		}
 	}

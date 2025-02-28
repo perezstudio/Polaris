@@ -52,7 +52,9 @@ struct OpeningView: View {
 			.padding(.top, 100)
 			.padding(.bottom, 50)
 		}
-		.background(Color(UIColor.systemGroupedBackground))
+		#if os(iOS)
+		.background(Color(.systemGroupedBackground))
+		#endif
     }
 }
 

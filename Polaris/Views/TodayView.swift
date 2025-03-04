@@ -36,96 +36,119 @@ struct TodayView: View {
 	
 	var body: some View {
 		NavigationStack {
-			ZStack {
-				mainContent
-				if activeTodo == nil {
-					floatingActionButton
+			List {
+				if todayTodos.isEmpty {
+					ContentUnavailableView {
+						Label {
+							Text("All Done For Today")
+						} icon: {
+							Image(systemName: "star.fill")
+								.foregroundStyle(Color.yellow)
+						}
+					} description: {
+						Text("Way to go! You've completed all your tasks for today! Keep it up!")
+					} actions: {
+						Button {
+							addNewTodo()
+						} label: {
+							Label("Create New Task", systemImage: "plus")
+						}
+					}
+				} else {
+					ForEach(todayTodos) { todo in
+						TodoCard(
+							todo: todo,
+							showDetails: .constant(activeTodo == todo),
+							isNewTodo: todo == newlyCreatedTodo
+						)
+						.onTapGesture {
+							todoInspector.todo = todo
+							todoInspector.showTodoInspector = true
+						}
+					}
 				}
 			}
-			#if os(iOS)
-			.background(Color(.systemGroupedBackground))
-			#endif
 			.navigationTitle("Today")
 		}
 	}
 	
 	// MARK: - View Components
 	
-	private var mainContent: some View {
-		ScrollView(showsIndicators: false) {
-			VStack {
-				if todayTodos.isEmpty {
-					emptyStateView
-				} else {
-					todoListView
-				}
-			}
-		}
-		.onTapGesture {
-			withAnimation {
-				activeTodo = nil
-				newlyCreatedTodo = nil
-			}
-		}
-	}
-	
-	private var emptyStateView: some View {
-		ContentUnavailableView {
-			Label {
-				Text("All Done For Today")
-			} icon: {
-				Image(systemName: "star.fill")
-					.foregroundStyle(Color.yellow)
-			}
-		} description: {
-			Text("Way to go! You've completed all your tasks for today! Keep it up!")
-		} actions: {
-			Button {
-				addNewTodo()
-			} label: {
-				Label("Create New Task", systemImage: "plus")
-			}
-		}
-	}
-	
-	private var todoListView: some View {
-		ForEach(todayTodos) { todo in
-			TodoCard(
-				todo: todo,
-				showDetails: .constant(activeTodo == todo),
-				isNewTodo: todo == newlyCreatedTodo
-			)
-			.onTapGesture {
-				withAnimation {
-					todoInspector.todo = todo
-					todoInspector.showTodoInspector = true
-				}
-			}
-		}
-	}
-	
-	private var floatingActionButton: some View {
-		VStack {
-			Spacer()
-			HStack {
-				Spacer()
-				Button {
-					addNewTodo()
-				} label: {
-					Image(systemName: "plus")
-						.font(.title2)
-						.fontWeight(.semibold)
-						.foregroundColor(.white)
-						.frame(width: 56, height: 56)
-						.background(Color.blue)
-						.clipShape(Circle())
-						.shadow(radius: 4)
-				}
-				.padding(.trailing, 20)
-				.padding(.bottom, 20)
-			}
-		}
-	}
+//	private var mainContent: some View {
+//		ScrollView(showsIndicators: false) {
+//			VStack {
+//				if todayTodos.isEmpty {
+//					emptyStateView
+//				} else {
+//					todoListView
+//				}
+//			}
+//		}
+//		.onTapGesture {
+//			withAnimation {
+//				activeTodo = nil
+//				newlyCreatedTodo = nil
+//			}
+//		}
+//	}
+//	
+//	private var emptyStateView: some View {
+//		ContentUnavailableView {
+//			Label {
+//				Text("All Done For Today")
+//			} icon: {
+//				Image(systemName: "star.fill")
+//					.foregroundStyle(Color.yellow)
+//			}
+//		} description: {
+//			Text("Way to go! You've completed all your tasks for today! Keep it up!")
+//		} actions: {
+//			Button {
+//				addNewTodo()
+//			} label: {
+//				Label("Create New Task", systemImage: "plus")
+//			}
+//		}
+//	}
+//	
+//	private var todoListView: some View {
+//		ForEach(todayTodos) { todo in
+//			TodoCard(
+//				todo: todo,
+//				showDetails: .constant(activeTodo == todo),
+//				isNewTodo: todo == newlyCreatedTodo
+//			)
+//			.onTapGesture {
+//				withAnimation {
+//					todoInspector.todo = todo
+//					todoInspector.showTodoInspector = true
+//				}
+//			}
+//		}
+//	}
+//	
+//	private var floatingActionButton: some View {
+//		VStack {
+//			Spacer()
+//			HStack {
+//				Spacer()
+//				Button {
+//					addNewTodo()
+//				} label: {
+//					Image(systemName: "plus")
+//						.font(.title2)
+//						.fontWeight(.semibold)
+//						.foregroundColor(.white)
+//						.frame(width: 56, height: 56)
+//						.background(Color.blue)
+//						.clipShape(Circle())
+//						.shadow(radius: 4)
+//				}
+//				.padding(.trailing, 20)
+//				.padding(.bottom, 20)
+//			}
+//		}
+//	}
 	
 	// MARK: - Helper Functions
 	

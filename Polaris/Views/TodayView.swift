@@ -2,174 +2,73 @@
 //  TodayView.swift
 //  Polaris
 //
-//  Created by Kevin Perez on 12/26/24.
+//  Created by Kevin Perez on 5/5/25.
 //
 
 import SwiftUI
 import SwiftData
 
-extension Date {
-	var startOfDay: Date {
-		Calendar.current.startOfDay(for: self)
-	}
-}
-
 struct TodayView: View {
 	
-	@Environment(\.modelContext) private var modelContext
-	@Environment(\.todoInspector) private var todoInspector
+	@Query(filter: #Predicate<Todo> { !$0.isCompleted }) private var allTodos: [Todo]
 
-	// Updated Query with basic date comparison
-	@Query(filter: #Predicate<Todo> { todo in
-		todo.dueDate != nil && todo.status == false
-	}, sort: \Todo.created) var todos: [Todo]
-	@State private var activeTodo: Todo? = nil
-	@State private var newlyCreatedTodo: Todo? = nil
-	
-	// Filter todos for today in the view layer
-	private var todayTodos: [Todo] {
-		todos.filter { todo in
-			guard let dueDate = todo.dueDate else { return false }
-			return Calendar.current.isDateInToday(dueDate)
+	var todos: [Todo] {
+		let calendar = Calendar.current
+		let today = calendar.startOfDay(for: Date())
+		let tomorrow = calendar.date(byAdding: .day, value: 1, to: today)!
+		
+		return allTodos.filter { todo in
+			let due = todo.dueDate.map { calendar.startOfDay(for: $0) < tomorrow } ?? false
+			let deadline = todo.deadline.map { calendar.startOfDay(for: $0) < tomorrow } ?? false
+			return due || deadline
 		}
 	}
 	
 	var body: some View {
 		NavigationStack {
 			List {
-				if todayTodos.isEmpty {
-					ContentUnavailableView {
-						Label {
-							Text("All Done For Today")
-						} icon: {
-							Image(systemName: "star.fill")
-								.foregroundStyle(Color.yellow)
-						}
-					} description: {
-						Text("Way to go! You've completed all your tasks for today! Keep it up!")
-					} actions: {
-						Button {
-							addNewTodo()
-						} label: {
-							Label("Create New Task", systemImage: "plus")
+				if !todos.isEmpty {
+					SwiftUI.Section {
+						ForEach(todos) { todo in
+							TodoListView(todo: todo)
 						}
 					}
 				} else {
-					ForEach(todayTodos) { todo in
-						TodoCard(
-							todo: todo,
-							showDetails: .constant(activeTodo == todo),
-							isNewTodo: todo == newlyCreatedTodo
-						)
-						.onTapGesture {
-							todoInspector.todo = todo
-							todoInspector.showTodoInspector = true
-						}
-					}
+					ContentUnavailableView(
+						"No Todos Left",
+						systemImage: "checkmark.circle",
+						description: Text("Great Job! You're all done for the day!")
+					)
 				}
 			}
 			.navigationTitle("Today")
-		}
-	}
-	
-	// MARK: - View Components
-	
-//	private var mainContent: some View {
-//		ScrollView(showsIndicators: false) {
-//			VStack {
-//				if todayTodos.isEmpty {
-//					emptyStateView
-//				} else {
-//					todoListView
-//				}
-//			}
-//		}
-//		.onTapGesture {
-//			withAnimation {
-//				activeTodo = nil
-//				newlyCreatedTodo = nil
-//			}
-//		}
-//	}
-//	
-//	private var emptyStateView: some View {
-//		ContentUnavailableView {
-//			Label {
-//				Text("All Done For Today")
-//			} icon: {
-//				Image(systemName: "star.fill")
-//					.foregroundStyle(Color.yellow)
-//			}
-//		} description: {
-//			Text("Way to go! You've completed all your tasks for today! Keep it up!")
-//		} actions: {
-//			Button {
-//				addNewTodo()
-//			} label: {
-//				Label("Create New Task", systemImage: "plus")
-//			}
-//		}
-//	}
-//	
-//	private var todoListView: some View {
-//		ForEach(todayTodos) { todo in
-//			TodoCard(
-//				todo: todo,
-//				showDetails: .constant(activeTodo == todo),
-//				isNewTodo: todo == newlyCreatedTodo
-//			)
-//			.onTapGesture {
-//				withAnimation {
-//					todoInspector.todo = todo
-//					todoInspector.showTodoInspector = true
-//				}
-//			}
-//		}
-//	}
-//	
-//	private var floatingActionButton: some View {
-//		VStack {
-//			Spacer()
-//			HStack {
-//				Spacer()
-//				Button {
-//					addNewTodo()
-//				} label: {
-//					Image(systemName: "plus")
-//						.font(.title2)
-//						.fontWeight(.semibold)
-//						.foregroundColor(.white)
-//						.frame(width: 56, height: 56)
-//						.background(Color.blue)
-//						.clipShape(Circle())
-//						.shadow(radius: 4)
-//				}
-//				.padding(.trailing, 20)
-//				.padding(.bottom, 20)
-//			}
-//		}
-//	}
-	
-	// MARK: - Helper Functions
-	
-	private func addNewTodo() {
-		let newTodo = Todo(
-			title: "",
-			notes: "",
-			status: false,
-			dueDate: Date.now,
-			deadLineDate: Date.now,
-			inbox: false
-		)
-		modelContext.insert(newTodo)
-		try? modelContext.save()
-		withAnimation {
-			activeTodo = newTodo
-			newlyCreatedTodo = newTodo
+			#if os(iOS)
+			.navigationBarTitleDisplayMode(.large)
+			.toolbar {
+				ToolbarItemGroup(placement: .bottomBar) {
+					Spacer()
+					Button {
+						print("Create Todo")
+					} label: {
+						Label("New Todo", systemImage: "plus.square.fill")
+					}
+				}
+			}
+			#elseif os(macOS)
+			.toolbar {
+				ToolbarItemGroup(placement: .navigation) {
+					Button {
+						print("Create Todo")
+					} label: {
+						Label("New Todo", systemImage: "plus.square.fill")
+					}
+				}
+			}
+			#endif
 		}
 	}
 }
 
 #Preview {
-	ContentView()
+	TodayView()
 }

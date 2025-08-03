@@ -38,9 +38,7 @@ struct ProjectIconPicker: View {
 											.font(.system(size: 24))
 											.frame(width: 44, height: 44)
 											.foregroundStyle(selectedColor.color)
-										#if os(iOS)
-											.background(selectedSymbol == symbol ? selectedColor.color.opacity(0.2) : Color(UIColor.secondarySystemGroupedBackground))
-										#endif
+											.background(selectedSymbol == symbol ? selectedColor.color.opacity(0.2) : Color.gray.opacity(0.1))
 											.clipShape(RoundedRectangle(cornerRadius: 8))
 									}
 									.buttonStyle(PlainButtonStyle())
@@ -54,7 +52,6 @@ struct ProjectIconPicker: View {
 			}
 			.navigationTitle("Select An Icon")
 			#if os(iOS)
-			.background(Color(UIColor.systemGroupedBackground))
 			.navigationBarTitleDisplayMode(.inline)
 			#endif
 		}

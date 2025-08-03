@@ -7,195 +7,174 @@
 
 import SwiftUI
 import SwiftData
+import Foundation
 
 @Model
 class Project {
 	var id: UUID
-	var title: String
-	var icon: String
+	var name: String
 	var color: ProjectColor
+	var icon: String
+	var isArchived: Bool = false
+	var isFavorite: Bool = false
 	
-	@Relationship(deleteRule: .cascade, inverse: \Section.project)
-	var sections: [Section] = []
-	
-	@Relationship(deleteRule: .cascade, inverse: \Todo.project)
-	var todos: [Todo] = []
+	@Relationship(deleteRule: .cascade, inverse: \Task.project)
+	var tasks: [Task] = []
 	
 	var createdAt: Date = Date()
 	
-	init(id: UUID = UUID(), title: String, icon: String, color: ProjectColor) {
+	init(id: UUID = UUID(), name: String, color: ProjectColor = ProjectColor.blue, icon: String = "folder") {
 		self.id = id
-		self.title = title
-		self.icon = icon
+		self.name = name
 		self.color = color
+		self.icon = icon
+	}
+	
+	var incompleteTasks: [Task] {
+		tasks.filter { !$0.isCompleted }
+	}
+	
+	var completedTasks: [Task] {
+		tasks.filter { $0.isCompleted }
 	}
 }
 
 @Model
-class Section {
+class Task {
 	var id: UUID
-	var title: String
-	
-	@Relationship(deleteRule: .nullify)
-	var project: Project?
-	
-	@Relationship(deleteRule: .cascade, inverse: \Todo.section)
-	var todos: [Todo] = []
-	
-	var createdAt: Date = Date()
-	
-	init(id: UUID = UUID(), title: String, project: Project? = nil) {
-		self.id = id
-		self.title = title
-		self.project = project
-	}
-}
-
-@Model
-class Todo {
-	var id: UUID
-	var title: String
-	var descriptionText: Data?
+	var content: String
+	var taskDescription: String = ""
 	var isCompleted: Bool = false
-	var isInbox: Bool = true  // New property - defaults to true
+	var priority: TaskPriority = TaskPriority.none
 	var dueDate: Date?
-	var deadline: Date?
-
+	var completedAt: Date?
+	var position: Int = 0
+	
 	@Relationship(deleteRule: .nullify)
 	var project: Project?
-
-	@Relationship(deleteRule: .nullify)
-	var section: Section?
-
-	@Relationship(deleteRule: .cascade, inverse: \ChecklistItem.todo)
-	var checklistItems: [ChecklistItem] = []
-
+	
+	@Relationship(deleteRule: .cascade, inverse: \Subtask.parentTask)
+	var subtasks: [Subtask] = []
+	
+	@Relationship(deleteRule: .cascade, inverse: \TaskLabel.task)
+	var taskLabels: [TaskLabel] = []
+	
 	var createdAt: Date = Date()
-
+	var updatedAt: Date = Date()
+	
 	init(id: UUID = UUID(),
-		title: String,
-		 descriptionText: Data? = nil,
-		 isCompleted: Bool = false,
-		 isInbox: Bool = true,  // Add to initializer
+		 content: String,
+		 taskDescription: String = "",
+		 priority: TaskPriority = TaskPriority.none,
 		 dueDate: Date? = nil,
-		 deadline: Date? = nil,
-		 project: Project? = nil,
-		 section: Section? = nil) {
+		 project: Project? = nil) {
 		self.id = id
-		self.title = title
-		self.descriptionText = descriptionText
-		self.isCompleted = isCompleted
-		self.isInbox = isInbox
+		self.content = content
+		self.taskDescription = taskDescription
+		self.priority = priority
 		self.dueDate = dueDate
-		self.deadline = deadline
 		self.project = project
-		self.section = section
-		
-		// If a project or section is set, it's no longer in the inbox
-		if project != nil || section != nil {
-			self.isInbox = false
-		}
 	}
 	
-	// Computed property to check if a todo belongs in inbox
-	var belongsInInbox: Bool {
-		return isInbox || (project == nil && section == nil)
+	// Computed properties for date checking
+	var isOverdue: Bool {
+		guard let dueDate = dueDate, !isCompleted else { return false }
+		return dueDate < Calendar.current.startOfDay(for: Date())
 	}
 	
 	var isToday: Bool {
+		guard let dueDate = dueDate else { return false }
+		return Calendar.current.isDateInToday(dueDate)
+	}
+	
+	var isTomorrow: Bool {
+		guard let dueDate = dueDate else { return false }
+		return Calendar.current.isDateInTomorrow(dueDate)
+	}
+	
+	var isThisWeek: Bool {
+		guard let dueDate = dueDate else { return false }
 		let calendar = Calendar.current
-		let today = calendar.startOfDay(for: Date())
-		let tomorrow = calendar.date(byAdding: .day, value: 1, to: today)!
-		
-		// Check if dueDate is today or earlier
-		if let dueDate = dueDate {
-			let dueDateStart = calendar.startOfDay(for: dueDate)
-			if dueDateStart < tomorrow {
-				return true
-			}
-		}
-		
-		// Check if deadline is today or earlier
-		if let deadline = deadline {
-			let deadlineStart = calendar.startOfDay(for: deadline)
-			if deadlineStart < tomorrow {
-				return true
-			}
-		}
-		
-		return false
+		return calendar.isDate(dueDate, equalTo: Date(), toGranularity: .weekOfYear)
 	}
 	
-	var dueDateYear: Int {
-		guard let dueDate = dueDate else { return 0 }
-		return Calendar.current.component(.year, from: dueDate)
+	var labels: [TaskLabelModel] {
+		taskLabels.compactMap { $0.label }
 	}
 	
-	/// Returns the month component of the due date (1-12)
-	var dueDateMonth: Int {
-		guard let dueDate = dueDate else { return 0 }
-		return Calendar.current.component(.month, from: dueDate)
+	func complete() {
+		isCompleted = true
+		completedAt = Date()
+		updatedAt = Date()
 	}
 	
-	/// Returns the day component of the due date (1-31)
-	var dueDateDay: Int {
-		guard let dueDate = dueDate else { return 0 }
-		return Calendar.current.component(.day, from: dueDate)
-	}
-	
-	// MARK: - Deadline Components
-	
-	/// Returns the year component of the deadline
-	var deadlineYear: Int {
-		guard let deadline = deadline else { return 0 }
-		return Calendar.current.component(.year, from: deadline)
-	}
-	
-	/// Returns the month component of the deadline (1-12)
-	var deadlineMonth: Int {
-		guard let deadline = deadline else { return 0 }
-		return Calendar.current.component(.month, from: deadline)
-	}
-	
-	/// Returns the day component of the deadline (1-31)
-	var deadlineDay: Int {
-		guard let deadline = deadline else { return 0 }
-		return Calendar.current.component(.day, from: deadline)
-	}
-	
-	var attributedDescription: NSAttributedString {
-		get {
-			guard let data = descriptionText else {
-				return NSAttributedString(string: "")
-			}
-			return (try? NSAttributedString(data: data, options: [
-				.documentType: NSAttributedString.DocumentType.rtf
-			], documentAttributes: nil)) ?? NSAttributedString(string: "")
-		}
-		set {
-			descriptionText = try? newValue.data(from: NSRange(location: 0, length: newValue.length), documentAttributes: [
-				.documentType: NSAttributedString.DocumentType.rtf
-			])
-		}
+	func uncomplete() {
+		isCompleted = false
+		completedAt = nil
+		updatedAt = Date()
 	}
 }
 
 @Model
-class ChecklistItem {
+class Subtask {
 	var id: UUID
-	var title: String
+	var content: String
 	var isCompleted: Bool = false
+	var position: Int = 0
 	
 	@Relationship(deleteRule: .nullify)
-	var todo: Todo?
+	var parentTask: Task?
 	
 	var createdAt: Date = Date()
 	
-	init(id: UUID = UUID(), title: String, isCompleted: Bool = false, todo: Todo? = nil) {
+	init(id: UUID = UUID(), content: String, isCompleted: Bool = false, position: Int = 0, parentTask: Task? = nil) {
 		self.id = id
-		self.title = title
+		self.content = content
 		self.isCompleted = isCompleted
-		self.todo = todo
+		self.position = position
+		self.parentTask = parentTask
+	}
+}
+
+@Model
+class TaskLabelModel {
+	var id: UUID
+	var name: String
+	var color: ProjectColor
+	var isFavorite: Bool = false
+	
+	@Relationship(deleteRule: .cascade, inverse: \TaskLabel.label)
+	var taskLabels: [TaskLabel] = []
+	
+	var createdAt: Date = Date()
+	
+	init(id: UUID = UUID(), name: String, color: ProjectColor) {
+		self.id = id
+		self.name = name
+		self.color = color
+	}
+	
+	var tasks: [Task] {
+		taskLabels.compactMap { $0.task }
+	}
+}
+
+@Model
+class TaskLabel {
+	var id: UUID
+	
+	@Relationship(deleteRule: .nullify)
+	var task: Task?
+	
+	@Relationship(deleteRule: .nullify)
+	var label: TaskLabelModel?
+	
+	var createdAt: Date = Date()
+	
+	init(id: UUID = UUID(), task: Task? = nil, label: TaskLabelModel? = nil) {
+		self.id = id
+		self.task = task
+		self.label = label
 	}
 }
 

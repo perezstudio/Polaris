@@ -16,7 +16,7 @@ struct PolarisApp: App {
 	var body: some Scene {
 		WindowGroup {
 			ContentView()
-				.modelContainer(for: [Project.self, Section.self, Todo.self, ChecklistItem.self])
+				.modelContainer(for: [Project.self, Task.self, Subtask.self, TaskLabelModel.self, TaskLabel.self])
 				.environment(globalStore)
 		}
 	}

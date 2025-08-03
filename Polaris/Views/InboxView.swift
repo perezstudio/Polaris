@@ -2,83 +2,122 @@
 //  InboxView.swift
 //  Polaris
 //
-//  Created by Kevin Perez on 4/27/25.
+//  Created by Kevin Perez on 8/3/25.
 //
 
 import SwiftUI
 import SwiftData
 
 struct InboxView: View {
+	@Environment(\.modelContext) private var modelContext
+	@Environment(GlobalStore.self) private var store
 	
-	@Environment(GlobalStore.self) var store
-	@Query(filter: #Predicate<Todo> { $0.isInbox == true && $0.isCompleted == false })
-	private var todos: [Todo] = []
-	@State var showCreateTodoSheet: Bool = false
+	@Query(filter: #Predicate<Task> { !$0.isCompleted && $0.project == nil })
+	private var inboxTasks: [Task]
+	
+	@State private var newTaskContent = ""
+	@State private var showAddTask = false
+	
+	var sortedTasks: [Task] {
+		inboxTasks.sorted { task1, task2 in
+			// Sort by priority first, then by creation date
+			if task1.priority != task2.priority {
+				return task1.priority.sortOrder > task2.priority.sortOrder
+			}
+			return task1.createdAt > task2.createdAt
+		}
+	}
 	
 	var body: some View {
-		NavigationStack {
-			List {
-				if !todos.isEmpty {
-					SwiftUI.Section {
-						ForEach(todos) { todo in
-							TodoListView(todo: todo)
-								.onTapGesture {
-									store.selectedTodo = todo
-									store.showInspector = true
-								}
+		List {
+			// Quick Add Task
+			Section {
+				HStack {
+					TextField("Add a task", text: $newTaskContent)
+						.textFieldStyle(.plain)
+						.onSubmit {
+							addQuickTask()
 						}
+					
+					if !newTaskContent.isEmpty {
+						Button("Add") {
+							addQuickTask()
+						}
+						.buttonStyle(.borderedProminent)
+					}
+				}
+				.padding(.vertical, 4)
+			}
+			
+			// Tasks Section
+			Section {
+				if sortedTasks.isEmpty {
+					ContentUnavailableView {
+						Label("Inbox is empty", systemImage: "tray")
+					} description: {
+						Text("Add tasks here to organize them later")
 					}
 				} else {
-					ContentUnavailableView {
-						Label {
-							Text("No Todos Left")
-						} icon: {
-							Image(systemName: "tray.fill")
-								.foregroundStyle(Color.blue)
-						}
-					} description: {
-						Text("Great Job! You're on a roll!")
-					} actions: {
-						Button {
-							showCreateTodoSheet.toggle()
-						} label: {
-							Label("Create Todo", systemImage: "plus")
-						}
+					ForEach(sortedTasks) { task in
+						TaskRowView(task: task)
 					}
+					.onDelete(perform: deleteTasks)
 				}
-			}
-			.navigationTitle("Inbox")
-			#if os(iOS)
-			.navigationBarTitleDisplayMode(.large)
-			.toolbar {
-				ToolbarItemGroup(placement: .bottomBar) {
+			} header: {
+				HStack {
+					Text("Tasks")
 					Spacer()
-					Button {
-						print("Create Todo")
-					} label: {
-						Label("New Todo", systemImage: "plus.square.fill")
-					}
+					Text("\\(sortedTasks.count)")
+						.foregroundStyle(.secondary)
+						.font(.caption)
 				}
 			}
-			#elseif os(macOS)
-			.toolbar {
-				ToolbarItemGroup(placement: .navigation) {
-					Spacer()
-					Button {
-						print("Create Todo")
-					} label: {
-						Label("New Todo", systemImage: "plus.square.fill")
-					}
+		}
+		.navigationTitle("Inbox")
+		.toolbar {
+			ToolbarItem(placement: .primaryAction) {
+				Button {
+					showAddTask = true
+				} label: {
+					Image(systemName: "plus")
 				}
 			}
-			#endif
-			.sheet(isPresented: $showCreateTodoSheet) {
-				CreateTodoView()
+		}
+		.sheet(isPresented: $showAddTask) {
+			AddTaskView()
+				.presentationDetents([.medium])
+		}
+	}
+	
+	private func addQuickTask() {
+		let trimmedContent = newTaskContent.trimmingCharacters(in: .whitespacesAndNewlines)
+		guard !trimmedContent.isEmpty else { return }
+		
+		let task = Task(content: trimmedContent)
+		modelContext.insert(task)
+		
+		do {
+			try modelContext.save()
+			newTaskContent = ""
+		} catch {
+			print("Failed to add task: \\(error)")
+		}
+	}
+	
+	private func deleteTasks(offsets: IndexSet) {
+		withAnimation {
+			for index in offsets {
+				modelContext.delete(sortedTasks[index])
 			}
+			try? modelContext.save()
 		}
 	}
 }
 
 #Preview {
-	InboxView()
+	NavigationStack {
+		InboxView()
+			.modelContainer(for: Task.self, inMemory: true)
+			.environment(GlobalStore())
+	}
 }

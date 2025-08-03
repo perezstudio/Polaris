@@ -11,120 +11,169 @@ import SwiftData
 struct SidebarView: View {
 	
 	@Environment(\.modelContext) private var modelContext
-	@Query(sort: \Project.id) var projects: [Project]
-	@State var showSettingsSheet: Bool = false
-	@State var showCreateProjectSheet: Bool = false
-	@State var showCreateTodoSheet: Bool = false
+	@Environment(GlobalStore.self) private var store
 	
-	let menuData: [MenuSection] = [
-		MenuSection(title: nil, items: [
-			MenuItem(title: "Inbox", icon: "tray.fill", color: .blue, destination: InboxView())
-		]),
-		MenuSection(title: nil, items: [
-			MenuItem(title: "Today", icon: "star.fill", color: .yellow,destination: TodayView()),
-			MenuItem(title: "Scheduled", icon: "calendar", color: .red,destination: ScheduledView()),
-			MenuItem(title: "All Todos", icon: "checkmark.circle.fill", color: .mint,destination: FilterView()),
-			MenuItem(title: "Logbook", icon: "checklist", color: .green,destination: FilterView())
-		])
-	]
+	@Query(filter: #Predicate<Project> { !$0.isArchived && $0.isFavorite })
+	private var favoriteProjects: [Project]
+	
+	@Query(filter: #Predicate<Project> { !$0.isArchived && !$0.isFavorite })
+	private var regularProjects: [Project]
+	
+	@Query(filter: #Predicate<Task> { !$0.isCompleted && $0.project == nil })
+	private var inboxTasks: [Task]
+	
+	@Query(filter: #Predicate<Task> { !$0.isCompleted && $0.dueDate != nil })
+	private var tasksWithDates: [Task]
+	
+	@State var showCreateProject: Bool = false
+	@State var showAddTask: Bool = false
+	
+	var todayTaskCount: Int {
+		tasksWithDates.filter { $0.isToday }.count
+	}
+	
+	var overdueTaskCount: Int {
+		tasksWithDates.filter { $0.isOverdue }.count
+	}
 	
 	var body: some View {
 		NavigationStack {
 			List {
-				SwiftUI.ForEach(menuData) { section in
-					SwiftUI.Section {
-						menuItemsForSection(section)
+				// Main Views
+				Section {
+					NavigationLink(destination: InboxView()) {
+						Label {
+							HStack {
+								Text("Inbox")
+								Spacer()
+								if inboxTasks.count > 0 {
+									Text("\(inboxTasks.count)")
+										.font(.caption)
+										.foregroundStyle(.secondary)
+								}
+							}
+						} icon: {
+							Image(systemName: "tray.fill")
+								.foregroundStyle(.blue)
+						}
+					}
+					
+					NavigationLink(destination: TodayView()) {
+						Label {
+							HStack {
+								Text("Today")
+								Spacer()
+								if todayTaskCount > 0 || overdueTaskCount > 0 {
+									Text("\(todayTaskCount + overdueTaskCount)")
+										.font(.caption)
+										.foregroundStyle(overdueTaskCount > 0 ? .red : .secondary)
+								}
+							}
+						} icon: {
+							Image(systemName: "calendar")
+								.foregroundStyle(.green)
+						}
+					}
+					
+					NavigationLink(destination: UpcomingView()) {
+						Label {
+							Text("Upcoming")
+						} icon: {
+							Image(systemName: "calendar.badge.clock")
+								.foregroundStyle(.orange)
+						}
 					}
 				}
-				SwiftUI.Section(header: Text("Projects")) {
-					if !projects.isEmpty {
-						ForEach(projects) { project in
-							NavigationLink(destination: ProjectView(project: project)) {
-								LabelView(project: project)
+				
+				// Favorite Projects
+				if !favoriteProjects.isEmpty {
+					Section("Favorites") {
+						ForEach(favoriteProjects.sorted { $0.name < $1.name }) { project in
+							NavigationLink(destination: ProjectDetailView(project: project)) {
+								Label {
+									HStack {
+										Text(project.name)
+										Spacer()
+										if project.incompleteTasks.count > 0 {
+											Text("\(project.incompleteTasks.count)")
+												.font(.caption)
+												.foregroundStyle(.secondary)
+										}
+									}
+								} icon: {
+									Image(systemName: project.icon)
+										.foregroundStyle(project.color.color)
+								}
 							}
 						}
-					} else {
-						ContentUnavailableView(
-								"No Projects",
-								systemImage: "rectangle.stack.fill",
-								description: Text("You haven't created any projects yet.")
-							)
+					}
+				}
+				
+				// Projects Section
+				Section {
+					NavigationLink(destination: ProjectsView()) {
+						Label {
+							Text("Projects")
+						} icon: {
+							Image(systemName: "folder")
+								.foregroundStyle(.purple)
+						}
+					}
+					
+					// Recent Projects
+					ForEach(regularProjects.sorted { $0.name < $1.name }.prefix(5)) { project in
+						NavigationLink(destination: ProjectDetailView(project: project)) {
+							Label {
+								HStack {
+									Text(project.name)
+									Spacer()
+									if project.incompleteTasks.count > 0 {
+										Text("\(project.incompleteTasks.count)")
+											.font(.caption)
+											.foregroundStyle(.secondary)
+									}
+								}
+							} icon: {
+								Image(systemName: project.icon)
+									.foregroundStyle(project.color.color)
+							}
+						}
 					}
 				}
 			}
-			#if os(iOS)
-			.toolbar {
-				ToolbarItem(placement: .topBarTrailing) {
-					Button {
-						showSettingsSheet.toggle()
-					} label: {
-						Label("Settings", systemImage: "gear")
-					}
-				}
-				ToolbarItemGroup(placement: .bottomBar) {
-					Button {
-						showCreateProjectSheet.toggle()
-					} label: {
-						Label("New Project", systemImage: "rectangle.stack.fill.badge.plus")
-					}
-					Spacer()
-					Button {
-						showCreateTodoSheet.toggle()
-					} label: {
-						Label("New Todo", systemImage: "plus.square.fill")
-					}
-				}
-			}
-			#elseif os(macOS)
+			.navigationTitle("Polaris")
 			.toolbar {
 				ToolbarItem(placement: .primaryAction) {
 					Button {
-						showCreateProjectSheet.toggle()
+						showAddTask = true
 					} label: {
-						Label("New Project", systemImage: "rectangle.stack.fill")
+						Image(systemName: "plus")
 					}
 				}
+				
 				ToolbarItem(placement: .secondaryAction) {
 					Button {
-						showCreateTodoSheet.toggle()
+						showCreateProject = true
 					} label: {
-						Label("New Todo", systemImage: "checkmark.circle.fill")
+						Image(systemName: "folder.badge.plus")
 					}
 				}
 			}
-			#endif
-			.sheet(isPresented: $showSettingsSheet) {
-				SettingsView()
-			}
-			.sheet(isPresented: $showCreateProjectSheet) {
+			.sheet(isPresented: $showCreateProject) {
 				CreateProjectView()
 			}
-			.sheet(isPresented: $showCreateTodoSheet) {
-				CreateTodoView()
-			}
-		}
-	}
-	
-	@ViewBuilder
-	func menuItemsForSection(_ section: MenuSection) -> some View {
-		ForEach(section.items) { item in
-			NavigationLink(destination: item.destination) {
-				Label {
-					Text(item.title)
-				} icon: {
-					Image(systemName: item.icon)
-						.font(.caption)
-						.foregroundStyle(item.color)
-						.frame(width: 34, height: 34)
-						.background(item.color.opacity(0.2))
-						.cornerRadius(10)
-				}
-				.padding(.vertical, 2)
+			.sheet(isPresented: $showAddTask) {
+				AddTaskView()
+					.presentationDetents([.medium])
 			}
 		}
 	}
 }
 
 #Preview {
-	SidebarView()
+	NavigationStack {
+		SidebarView()
+	}
+	.modelContainer(for: Project.self, inMemory: true)
+	.environment(GlobalStore())
 }

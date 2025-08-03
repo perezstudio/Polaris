@@ -135,16 +135,18 @@ struct DateSelectorView: View {
 				Spacer()
 			}
 			.navigationTitle("Select Date")
+			#if os(iOS)
 			.navigationBarTitleDisplayMode(.inline)
-			.toolbar {
-				ToolbarItem(placement: .navigationBarTrailing) {
-					Button {
-						dismiss()
-					} label: {
-						Label("Done", systemImage: "xmark.circle.fill")
-					}
-				}
-			}
+			#endif
+//			.toolbar {
+//				ToolbarItem(placement: .navigationBarTrailing) {
+//					Button {
+//						dismiss()
+//					} label: {
+//						Label("Done", systemImage: "xmark.circle.fill")
+//					}
+//				}
+//			}
 		}
 	}
 	

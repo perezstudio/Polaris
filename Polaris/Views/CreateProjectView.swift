@@ -2,87 +2,156 @@
 //  CreateProjectView.swift
 //  Polaris
 //
-//  Created by Kevin Perez on 4/27/25.
+//  Created by Kevin Perez on 8/3/25.
 //
 
 import SwiftUI
 import SwiftData
 
 struct CreateProjectView: View {
-	
 	@Environment(\.modelContext) private var modelContext
 	@Environment(\.dismiss) private var dismiss
-	@State var projectTitle: String = ""
-	@State var projectIcon: String = "rectangle.stack.fill"
-	@State var projectColor: ProjectColor = .blue
+	
+	@State private var projectName = ""
+	@State private var selectedColor: ProjectColor = .blue
+	@State private var selectedIcon = "folder"
+	@State private var isFavorite = false
+	
+	@FocusState private var isFocused: Bool
+	
+	let iconOptions = [
+		"folder", "folder.fill", "briefcase", "briefcase.fill",
+		"house", "house.fill", "heart", "heart.fill",
+		"star", "star.fill", "flag", "flag.fill",
+		"book", "book.fill", "car", "car.fill",
+		"gamecontroller", "music.note", "camera", "photo"
+	]
 	
 	var body: some View {
 		NavigationStack {
 			Form {
-				SwiftUI.Section {
-					TextField("Project Name", text:$projectTitle)
+				Section("Project Details") {
+					TextField("Project name", text: $projectName)
+						.focused($isFocused)
+					
+					Toggle("Add to Favorites", isOn: $isFavorite)
 				}
-				SwiftUI.Section {
-					NavigationLink(destination: ProjectIconPicker(selectedSymbol: $projectIcon, selectedColor: $projectColor)) {
-						HStack {
-							Text("Project Icon")
-							Spacer()
-							Image(systemName: projectIcon)
-								.foregroundStyle(projectColor.color)
+				
+				Section("Appearance") {
+					// Color Picker
+					Picker("Color", selection: $selectedColor) {
+						ForEach(ProjectColor.allCases, id: \.self) { color in
+							HStack {
+								Circle()
+									.fill(color.color)
+									.frame(width: 20, height: 20)
+								Text(color.name)
+							}
+							.tag(color)
+						}
+					}
+					
+					// Icon Picker
+					VStack(alignment: .leading, spacing: 12) {
+						Text("Icon")
+							.font(.headline)
+						
+						LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 6), spacing: 12) {
+							ForEach(iconOptions, id: \.self) { icon in
+								Button {
+									selectedIcon = icon
+								} label: {
+									Image(systemName: icon)
+										.font(.title2)
+										.foregroundStyle(selectedIcon == icon ? .white : selectedColor.color)
+										.frame(width: 40, height: 40)
+										.background(selectedIcon == icon ? selectedColor.color : Color.gray.opacity(0.1))
+										.clipShape(RoundedRectangle(cornerRadius: 8))
+								}
+								.buttonStyle(.plain)
+							}
 						}
 					}
 				}
-				SwiftUI.Section {
-					NavigationLink(destination: ProjectColorPicker(selectedColor: $projectColor)) {
-						HStack {
-							Text("Project Color")
-							Spacer()
-							Circle()
-								.foregroundColor(projectColor.color)
-								.frame(height: 24)
+				
+				Section {
+					// Preview
+					HStack {
+						Image(systemName: selectedIcon)
+							.foregroundStyle(selectedColor.color)
+							.frame(width: 24, height: 24)
+						
+						VStack(alignment: .leading, spacing: 2) {
+							HStack {
+								Text(projectName.isEmpty ? "Project Name" : projectName)
+									.font(.body)
+								
+								if isFavorite {
+									Image(systemName: "star.fill")
+										.foregroundStyle(.yellow)
+										.font(.caption)
+								}
+							}
+							
+							Text("0 tasks")
+								.font(.caption)
+								.foregroundStyle(.secondary)
 						}
+						
+						Spacer()
 					}
-				}
-				Button {
-					createProject()
-				} label: {
-					Label("Create Project", systemImage: "rectangle.stack.fill.badge.plus")
+					.padding(.vertical, 4)
+				} header: {
+					Text("Preview")
 				}
 			}
-			.navigationTitle("Create Project")
+			.navigationTitle("New Project")
 			#if os(iOS)
 			.navigationBarTitleDisplayMode(.inline)
-			.toolbar {
-				ToolbarItem(placement: .topBarTrailing) {
-					Button {
-						dismiss()
-					} label: {
-						Label("Close", systemImage: "xmark.circle.fill")
-					}
-				}
-			}
-			#elseif os(macOS)
-			.toolbar {
-				ToolbarItem(placement: .navigation) {
-					Button {
-						dismiss()
-					} label: {
-						Label("Close", systemImage: "xmark.circle.fill")
-					}
-				}
-			}
 			#endif
+			.toolbar {
+				ToolbarItem(placement: .cancellationAction) {
+					Button("Cancel") {
+						dismiss()
+					}
+				}
+				
+				ToolbarItem(placement: .confirmationAction) {
+					Button("Create") {
+						createProject()
+					}
+					.disabled(projectName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+				}
+			}
+			.onAppear {
+				isFocused = true
+			}
 		}
 	}
 	
 	private func createProject() {
-		let newProject = Project(title: projectTitle, icon: projectIcon, color: projectColor)
-		modelContext.insert(newProject)
+		let trimmedName = projectName.trimmingCharacters(in: .whitespacesAndNewlines)
+		guard !trimmedName.isEmpty else { return }
 		
-		dismiss()
+		let project = Project(
+			name: trimmedName,
+			color: selectedColor,
+			icon: selectedIcon
+		)
+		project.isFavorite = isFavorite
+		
+		modelContext.insert(project)
+		
+		do {
+			try modelContext.save()
+			dismiss()
+		} catch {
+			print("Failed to create project: \\(error)")
+		}
 	}
 }
 
 #Preview {
 	CreateProjectView()
+		.modelContainer(for: Project.self, inMemory: true)
 }

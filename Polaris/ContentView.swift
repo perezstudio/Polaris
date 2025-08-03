@@ -50,22 +50,16 @@ struct ContentView: View {
 		}
 		#if os(iOS)
 		.sheet(isPresented: Bindable(store).showTaskDetail) {
-			if let selectedTask = store.selectedTask {
-				TaskDetailView(task: selectedTask, isInSheet: true)
-			}
+			TaskDetailView(isInSheet: true)
 		}
 		#else
 		.inspector(isPresented: Bindable(store).showTaskDetail) {
-			if let selectedTask = store.selectedTask {
-				TaskDetailView(task: selectedTask, isInSheet: false)
-			} else {
-				Text("Select a task to view details")
-					.foregroundStyle(.secondary)
-			}
+			TaskDetailView(isInSheet: false)
 		}
 		#endif
 	}
 }
+
 
 #Preview {
 	ContentView()

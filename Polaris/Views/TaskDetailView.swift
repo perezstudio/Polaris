@@ -9,7 +9,6 @@ import SwiftUI
 import SwiftData
 
 struct TaskDetailView: View {
-	@Bindable var task: Task
 	@Environment(\.modelContext) private var modelContext
 	@Environment(GlobalStore.self) private var store
 	
@@ -27,53 +26,62 @@ struct TaskDetailView: View {
 	
 	let isInSheet: Bool
 	
-	init(task: Task, isInSheet: Bool = false) {
-		self.task = task
+	init(isInSheet: Bool = false) {
 		self.isInSheet = isInSheet
 	}
 	
 	var body: some View {
-		Group {
-			if isInSheet {
-				NavigationStack {
-					taskDetailContent
-						.navigationTitle("Task Details")
-						#if os(iOS)
-						.navigationBarTitleDisplayMode(.inline)
-						#endif
+		if let task = store.selectedTask {
+			Group {
+				if isInSheet {
+					NavigationStack {
+						taskDetailContent(for: task)
+							.navigationTitle("Task Details")
+							#if os(iOS)
+							.navigationBarTitleDisplayMode(.inline)
+							#endif
+							.toolbar {
+								sheetToolbarContent(for: task)
+							}
+					}
+				} else {
+					taskDetailContent(for: task)
 						.toolbar {
-							sheetToolbarContent
+							inspectorToolbarContent(for: task)
 						}
 				}
-			} else {
-				taskDetailContent
-					.toolbar {
-						inspectorToolbarContent
-					}
 			}
-		}
-		.onAppear {
-			loadTaskData()
-		}
-		.confirmationDialog("Delete Task", isPresented: $showDeleteConfirmation) {
-			Button("Delete", role: .destructive) {
-				deleteTask()
+			.onAppear {
+				loadTaskData(from: task)
 			}
-			Button("Cancel", role: .cancel) { }
-		} message: {
-			Text("Are you sure you want to delete this task? This action cannot be undone.")
+			.onChange(of: store.selectedTask?.id) { _, _ in
+				if let newTask = store.selectedTask {
+					loadTaskData(from: newTask)
+				}
+			}
+			.confirmationDialog("Delete Task", isPresented: $showDeleteConfirmation) {
+				Button("Delete", role: .destructive) {
+					deleteTask(task)
+				}
+				Button("Cancel", role: .cancel) { }
+			} message: {
+				Text("Are you sure you want to delete this task? This action cannot be undone.")
+			}
+		} else {
+			Text("Select a task to view details")
+				.foregroundStyle(.secondary)
 		}
 	}
 	
 	@ViewBuilder
-	private var taskDetailContent: some View {
+	private func taskDetailContent(for task: Task) -> some View {
 		ScrollView {
 			VStack(alignment: .leading, spacing: 20) {
 				// Task completion and content
 				VStack(alignment: .leading, spacing: 12) {
 					HStack {
 						Button {
-							toggleCompletion()
+							toggleCompletion(for: task)
 						} label: {
 							Image(systemName: task.isCompleted ? "checkmark.circle.fill" : "circle")
 								.foregroundStyle(task.isCompleted ? .green : .gray)
@@ -180,12 +188,12 @@ struct TaskDetailView: View {
 							TextField("Add a subtask", text: $newSubtask)
 								.textFieldStyle(.roundedBorder)
 								.onSubmit {
-									addSubtask()
+									addSubtask(to: task)
 								}
 							
 							if !newSubtask.isEmpty {
 								Button("Add") {
-									addSubtask()
+									addSubtask(to: task)
 								}
 								.buttonStyle(.borderedProminent)
 							}
@@ -215,7 +223,7 @@ struct TaskDetailView: View {
 										Text(label.name)
 											.font(.caption)
 										Button {
-											removeLabel(label)
+											removeLabel(label, from: task)
 										} label: {
 											Image(systemName: "xmark.circle.fill")
 												.font(.caption)
@@ -277,10 +285,10 @@ struct TaskDetailView: View {
 	}
 	
 	@ToolbarContentBuilder
-	private var sheetToolbarContent: some ToolbarContent {
+	private func sheetToolbarContent(for task: Task) -> some ToolbarContent {
 		ToolbarItem(placement: .confirmationAction) {
 			Button("Done") {
-				saveChanges()
+				saveChanges(to: task)
 				store.closeTaskDetail()
 			}
 		}
@@ -295,10 +303,10 @@ struct TaskDetailView: View {
 	}
 	
 	@ToolbarContentBuilder
-	private var inspectorToolbarContent: some ToolbarContent {
+	private func inspectorToolbarContent(for task: Task) -> some ToolbarContent {
 		ToolbarItem(placement: .confirmationAction) {
 			Button("Save") {
-				saveChanges()
+				saveChanges(to: task)
 			}
 		}
 		
@@ -311,7 +319,7 @@ struct TaskDetailView: View {
 		}
 	}
 	
-	private func loadTaskData() {
+	private func loadTaskData(from task: Task) {
 		taskContent = task.content
 		taskDescription = task.taskDescription
 		selectedProject = task.project
@@ -320,7 +328,7 @@ struct TaskDetailView: View {
 		hasDueDate = task.dueDate != nil
 	}
 	
-	private func saveChanges() {
+	private func saveChanges(to task: Task) {
 		task.content = taskContent.trimmingCharacters(in: .whitespacesAndNewlines)
 		task.taskDescription = taskDescription
 		task.project = selectedProject
@@ -331,7 +339,7 @@ struct TaskDetailView: View {
 		try? modelContext.save()
 	}
 	
-	private func toggleCompletion() {
+	private func toggleCompletion(for task: Task) {
 		if task.isCompleted {
 			task.uncomplete()
 		} else {
@@ -340,7 +348,7 @@ struct TaskDetailView: View {
 		try? modelContext.save()
 	}
 	
-	private func addSubtask() {
+	private func addSubtask(to task: Task) {
 		let trimmed = newSubtask.trimmingCharacters(in: .whitespacesAndNewlines)
 		guard !trimmed.isEmpty else { return }
 		
@@ -357,14 +365,14 @@ struct TaskDetailView: View {
 		newSubtask = ""
 	}
 	
-	private func removeLabel(_ label: TaskLabelModel) {
+	private func removeLabel(_ label: TaskLabelModel, from task: Task) {
 		if let taskLabel = task.taskLabels.first(where: { $0.label?.id == label.id }) {
 			modelContext.delete(taskLabel)
 			try? modelContext.save()
 		}
 	}
 	
-	private func deleteTask() {
+	private func deleteTask(_ task: Task) {
 		modelContext.delete(task)
 		try? modelContext.save()
 		store.closeTaskDetail()
@@ -407,7 +415,7 @@ struct SubtaskRowView: View {
 }
 
 #Preview {
-	TaskDetailView(task: Task(content: "Sample Task"))
+	TaskDetailView()
 		.modelContainer(for: Task.self, inMemory: true)
 		.environment(GlobalStore())
 }

@@ -11,6 +11,7 @@ import SwiftData
 struct InboxView: View {
 	@Environment(\.modelContext) private var modelContext
 	@Environment(GlobalStore.self) private var store
+	@Environment(\.dismiss) private var dismiss
 	
 	@Query(filter: #Predicate<Task> { !$0.isCompleted && $0.project == nil })
 	private var inboxTasks: [Task]
@@ -30,25 +31,6 @@ struct InboxView: View {
 	
 	var body: some View {
 		List {
-			// Quick Add Task
-			Section {
-				HStack {
-					TextField("Add a task", text: $newTaskContent)
-						.textFieldStyle(.plain)
-						.onSubmit {
-							addQuickTask()
-						}
-					
-					if !newTaskContent.isEmpty {
-						Button("Add") {
-							addQuickTask()
-						}
-						.buttonStyle(.borderedProminent)
-					}
-				}
-				.padding(.vertical, 4)
-			}
-			
 			// Tasks Section
 			Section {
 				if sortedTasks.isEmpty {
@@ -63,19 +45,20 @@ struct InboxView: View {
 					}
 					.onDelete(perform: deleteTasks)
 				}
-			} header: {
-				HStack {
-					Text("Tasks")
-					Spacer()
-					Text("\\(sortedTasks.count)")
-						.foregroundStyle(.secondary)
-						.font(.caption)
-				}
 			}
 		}
 		.navigationTitle("Inbox")
+		.navigationBarTitleDisplayMode(.large)
+		.navigationBarBackButtonHidden(true)
+		.enableSwipeBack()
 		.toolbar {
-			ToolbarItem(placement: .primaryAction) {
+			ToolbarItemGroup(placement: .bottomBar) {
+				Button {
+					dismiss()
+				} label: {
+					Image(systemName: "arrow.left")
+				}
+				Spacer()
 				Button {
 					showAddTask = true
 				} label: {

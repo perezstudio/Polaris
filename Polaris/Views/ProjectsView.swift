@@ -11,6 +11,7 @@ import SwiftData
 struct ProjectsView: View {
 	@Environment(\.modelContext) private var modelContext
 	@Environment(GlobalStore.self) private var store
+	@Environment(\.dismiss) private var dismiss
 	
 	@Query(filter: #Predicate<Project> { !$0.isArchived })
 	private var activeProjects: [Project]
@@ -42,16 +43,15 @@ struct ProjectsView: View {
 					}
 				} else {
 					ForEach(sortedActiveProjects) { project in
-						ProjectRowView(project: project)
+						NavigationLink(destination: ProjectDetailView(project: project)) {
+							Label {
+								Text(project.name)
+							} icon: {
+								Image(systemName: project.icon)
+									.foregroundStyle(project.color.color)
+							}
+						}
 					}
-				}
-			} header: {
-				HStack {
-					Text("Projects")
-					Spacer()
-					Text("\\(sortedActiveProjects.count)")
-						.foregroundStyle(.secondary)
-						.font(.caption)
 				}
 			}
 			
@@ -60,20 +60,28 @@ struct ProjectsView: View {
 				Section {
 					DisclosureGroup("Archived Projects (\\(archivedProjects.count))", isExpanded: $showArchivedProjects) {
 						ForEach(archivedProjects.sorted { $0.name < $1.name }) { project in
-							ProjectRowView(project: project)
-								.opacity(0.6)
+							Label("Test", systemImage: "folder")
 						}
 					}
 				}
 			}
 		}
 		.navigationTitle("Projects")
+		.navigationBarTitleDisplayMode(.large)
+		.navigationBarBackButtonHidden(true)
+		.enableSwipeBack()
 		.toolbar {
-			ToolbarItem(placement: .primaryAction) {
+			ToolbarItemGroup(placement: .bottomBar) {
+				Button {
+					dismiss()
+				} label: {
+					Image(systemName: "arrow.left")
+				}
+				Spacer()
 				Button {
 					showCreateProject = true
 				} label: {
-					Image(systemName: "plus")
+					Image(systemName: "folder.badge.plus")
 				}
 			}
 		}
@@ -81,90 +89,6 @@ struct ProjectsView: View {
 			CreateProjectView()
 				.presentationDetents([.medium])
 		}
-	}
-}
-
-struct ProjectRowView: View {
-	@Bindable var project: Project
-	@Environment(\.modelContext) private var modelContext
-	@Environment(GlobalStore.self) private var store
-	
-	var body: some View {
-		NavigationLink {
-			ProjectDetailView(project: project)
-		} label: {
-			HStack(spacing: 12) {
-				// Project Icon and Color
-				Image(systemName: project.icon)
-					.foregroundStyle(project.color.color)
-					.frame(width: 24, height: 24)
-				
-				// Project Info
-				VStack(alignment: .leading, spacing: 2) {
-					HStack {
-						Text(project.name)
-							.font(.body)
-							.foregroundStyle(.primary)
-						
-						if project.isFavorite {
-							Image(systemName: "star.fill")
-								.foregroundStyle(.yellow)
-								.font(.caption)
-						}
-						
-						Spacer()
-					}
-					
-					// Task Count
-					HStack {
-						Text("\\(project.incompleteTasks.count) tasks")
-							.font(.caption)
-							.foregroundStyle(.secondary)
-						
-						if !project.completedTasks.isEmpty {
-							Text("• \\(project.completedTasks.count) completed")
-								.font(.caption)
-								.foregroundStyle(.secondary)
-						}
-					}
-				}
-				
-				Spacer()
-				
-				// Menu
-				Menu {
-					Button {
-						project.isFavorite.toggle()
-						try? modelContext.save()
-					} label: {
-						Label(project.isFavorite ? "Remove from Favorites" : "Add to Favorites",
-							  systemImage: project.isFavorite ? "star.slash" : "star")
-					}
-					
-					Button {
-						project.isArchived.toggle()
-						try? modelContext.save()
-					} label: {
-						Label(project.isArchived ? "Unarchive" : "Archive",
-							  systemImage: project.isArchived ? "tray.and.arrow.up" : "archivebox")
-					}
-					
-					Button(role: .destructive) {
-						modelContext.delete(project)
-						try? modelContext.save()
-					} label: {
-						Label("Delete", systemImage: "trash")
-					}
-				} label: {
-					Image(systemName: "ellipsis")
-						.foregroundStyle(.secondary)
-						.frame(width: 32, height: 32)
-						.contentShape(Rectangle())
-				}
-				.buttonStyle(.plain)
-			}
-		}
-		.buttonStyle(.plain)
 	}
 }
 

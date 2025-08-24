@@ -14,10 +14,7 @@ struct SidebarView: View {
 	@Environment(GlobalStore.self) private var store
 	
 	@Query(filter: #Predicate<Project> { !$0.isArchived && $0.isFavorite })
-	private var favoriteProjects: [Project]
-	
-	@Query(filter: #Predicate<Project> { !$0.isArchived && !$0.isFavorite })
-	private var regularProjects: [Project]
+	private var projects: [Project]
 	
 	@Query(filter: #Predicate<Task> { !$0.isCompleted && $0.project == nil })
 	private var inboxTasks: [Task]
@@ -27,6 +24,7 @@ struct SidebarView: View {
 	
 	@State var showCreateProject: Bool = false
 	@State var showAddTask: Bool = false
+	@State var showSettingsSheet: Bool = false
 	
 	var todayTaskCount: Int {
 		tasksWithDates.filter { $0.isToday }.count
@@ -34,6 +32,11 @@ struct SidebarView: View {
 	
 	var overdueTaskCount: Int {
 		tasksWithDates.filter { $0.isOverdue }.count
+	}
+
+	var todayIconName: String {
+		let today = Calendar.current.component(.day, from: Date())
+		return "\(today).calendar"
 	}
 	
 	var body: some View {
@@ -57,7 +60,8 @@ struct SidebarView: View {
 								.foregroundStyle(.blue)
 						}
 					}
-					
+				}
+				Section {
 					NavigationLink(destination: TodayView()) {
 						Label {
 							HStack {
@@ -70,8 +74,8 @@ struct SidebarView: View {
 								}
 							}
 						} icon: {
-							Image(systemName: "calendar")
-								.foregroundStyle(.green)
+							Image(systemName: todayIconName)
+								.foregroundStyle(.yellow)
 						}
 					}
 					
@@ -80,82 +84,96 @@ struct SidebarView: View {
 							Text("Upcoming")
 						} icon: {
 							Image(systemName: "calendar.badge.clock")
-								.foregroundStyle(.orange)
+								.foregroundStyle(.red)
+						}
+					}
+					
+					NavigationLink(destination: UpcomingView()) {
+						Label {
+							Text("All Todos")
+						} icon: {
+							Image(systemName: "checklist")
+								.foregroundStyle(.teal)
+						}
+					}
+					
+					NavigationLink(destination: UpcomingView()) {
+						Label {
+							Text("Logbook")
+						} icon: {
+							Image(systemName: "checkmark.circle.fill")
+								.foregroundStyle(.green)
 						}
 					}
 				}
-				
-				// Favorite Projects
-				if !favoriteProjects.isEmpty {
-					Section("Favorites") {
-						ForEach(favoriteProjects.sorted { $0.name < $1.name }) { project in
+				Section {
+					NavigationLink(destination: ProjectsView()) {
+						Label {
+							HStack {
+								Text("Projects")
+								Spacer()
+								if todayTaskCount > 0 || overdueTaskCount > 0 {
+									Text("\(todayTaskCount + overdueTaskCount)")
+										.font(.caption)
+										.foregroundStyle(overdueTaskCount > 0 ? .red : .secondary)
+								}
+							}
+						} icon: {
+							Image(systemName: "folder")
+								.foregroundStyle(.blue)
+						}
+					}
+				}
+				Section(header: Text("Favorite Projects")) {
+					if !projects.isEmpty {
+						ForEach(projects, id:\.name) { project in
 							NavigationLink(destination: ProjectDetailView(project: project)) {
 								Label {
 									HStack {
 										Text(project.name)
 										Spacer()
-										if project.incompleteTasks.count > 0 {
-											Text("\(project.incompleteTasks.count)")
-												.font(.caption)
-												.foregroundStyle(.secondary)
-										}
 									}
 								} icon: {
 									Image(systemName: project.icon)
-										.foregroundStyle(project.color.color)
+										.foregroundStyle(.blue)
 								}
+							}
+						}
+					} else {
+						ContentUnavailableView {
+							Label("No Projects", systemImage: "folder")
+						} description: {
+							Text("Create A Project To Have It Appear Here.")
+						} actions: {
+							Button("Create Project") {
+								showCreateProject = true
 							}
 						}
 					}
 				}
-				
-				// Projects Section
-				Section {
-					NavigationLink(destination: ProjectsView()) {
-						Label {
-							Text("Projects")
-						} icon: {
-							Image(systemName: "folder")
-								.foregroundStyle(.purple)
-						}
-					}
-					
-					// Recent Projects
-					ForEach(regularProjects.sorted { $0.name < $1.name }.prefix(5)) { project in
-						NavigationLink(destination: ProjectDetailView(project: project)) {
-							Label {
-								HStack {
-									Text(project.name)
-									Spacer()
-									if project.incompleteTasks.count > 0 {
-										Text("\(project.incompleteTasks.count)")
-											.font(.caption)
-											.foregroundStyle(.secondary)
-									}
-								}
-							} icon: {
-								Image(systemName: project.icon)
-									.foregroundStyle(project.color.color)
-							}
-						}
-					}
-				}
+	
 			}
-			.navigationTitle("Polaris")
 			.toolbar {
-				ToolbarItem(placement: .primaryAction) {
+				ToolbarItemGroup(placement: .bottomBar) {
 					Button {
 						showAddTask = true
 					} label: {
 						Image(systemName: "plus")
 					}
-				}
-				
-				ToolbarItem(placement: .secondaryAction) {
+					Spacer()
 					Button {
 						showCreateProject = true
 					} label: {
 						Image(systemName: "folder.badge.plus")
+					}
+				}
+			}
+			.toolbar {
+				ToolbarItem(placement: .topBarTrailing) {
+					Button {
+						showSettingsSheet = true
+					} label: {
+						Image(systemName: "gear")
 					}
 				}
 			}
@@ -165,6 +183,9 @@ struct SidebarView: View {
 			.sheet(isPresented: $showAddTask) {
 				AddTaskView()
 					.presentationDetents([.medium])
+			}
+			.sheet(isPresented: $showSettingsSheet) {
+				SettingsView()
 			}
 		}
 	}

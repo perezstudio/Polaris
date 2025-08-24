@@ -12,6 +12,7 @@ struct ProjectDetailView: View {
 	@Bindable var project: Project
 	@Environment(\.modelContext) private var modelContext
 	@Environment(GlobalStore.self) private var store
+	@Environment(\.dismiss) private var dismiss
 	
 	@State private var newTaskContent = ""
 	@State private var showAddTask = false
@@ -101,7 +102,17 @@ struct ProjectDetailView: View {
 		.navigationBarTitleDisplayMode(.large)
 		#endif
 		.toolbar {
-			ToolbarItem(placement: .primaryAction) {
+			ToolbarItemGroup(placement: .bottomBar) {
+				Button {
+					dismiss()
+				} label: {
+					Label {
+						Text("Back")
+					} icon: {
+						Image(systemName: "arrow.left")
+					}
+				}
+				Spacer()
 				Button {
 					showAddTask = true
 				} label: {
@@ -109,24 +120,20 @@ struct ProjectDetailView: View {
 				}
 			}
 			
-			ToolbarItem(placement: .secondaryAction) {
-				Menu {
-					Button {
-						project.isFavorite.toggle()
-						try? modelContext.save()
-					} label: {
-						Label(project.isFavorite ? "Remove from Favorites" : "Add to Favorites",
-							  systemImage: project.isFavorite ? "star.slash" : "star")
-					}
-					
-					Button {
-						project.isArchived.toggle()
-						try? modelContext.save()
-					} label: {
-						Label("Archive Project", systemImage: "archivebox")
-					}
+			ToolbarItemGroup(placement: .secondaryAction) {
+				Button {
+					project.isFavorite.toggle()
+					try? modelContext.save()
 				} label: {
-					Image(systemName: "ellipsis.circle")
+					Label(project.isFavorite ? "Remove from Favorites" : "Add to Favorites",
+						  systemImage: project.isFavorite ? "star.slash" : "star")
+				}
+				
+				Button {
+					project.isArchived.toggle()
+					try? modelContext.save()
+				} label: {
+					Label("Archive Project", systemImage: "archivebox")
 				}
 			}
 		}
